@@ -35,7 +35,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ github.repository }}
+            docjyj/aio-stalwart
             ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value=develop
@@ -49,7 +49,7 @@ jobs:
         uses: docker/login-action@v3
         if: github.event_name != 'pull_request'
         with:
-          username: ${{ github.actor }}
+          username: docjyj
           password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Log in to the GitHub Container Registry
