@@ -2,7 +2,7 @@
 
 # Test data
 AIO_LOCK="/opt/stalwart-mail/aio.lock"
-DATA_VERSION="0.7.0"
+DATA_VERSION="0.8.0"
 
 if [ -f "$AIO_LOCK" ]; then
     if [ "$DATA_VERSION" != "$(cat "$AIO_LOCK")" ]; then
