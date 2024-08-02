@@ -3,7 +3,15 @@
 This container is used in https://github.com/nextcloud/all-in-one/tree/main/community-containers/stalwart
 
 
-# UPGRADING
+## FAQ
+
+### The message "Waiting for key/cert to get created..." is displayed in a loop?
+
+Please add a certificate in volume `nextcloud_aio_caddy` in this path:
+- `VOLUME_ROOT/caddy/certificates/acme-v02.api.letsencrypt.org-directory/mail.$NC_DOMAIN/mail.$NC_DOMAIN.key`
+- `VOLUME_ROOT/caddy/certificates/acme-v02.api.letsencrypt.org-directory/mail.$NC_DOMAIN/mail.$NC_DOMAIN.crt`
+
+## Upgrading
 > [!NOTE]
 > Unless the starting script tells you, you have no action to do to update.
 
@@ -20,7 +28,7 @@ To avoid any loss of data, Stalwart will not launch.
 > [!CAUTION]
 > Before each update don't forget to make a backup.
 
-## Upgrading from 0.7.x to 0.8.x
+### Upgrading from 0.7.x to 0.8.x
 
 Before upgrading, do a backup of your data !
 
