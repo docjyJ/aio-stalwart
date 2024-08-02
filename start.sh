@@ -1,6 +1,5 @@
 #!/bin/sh
 
-# Test data
 AIO_LOCK="/opt/stalwart-mail/aio.lock"
 DATA_VERSION="0.9"
 
@@ -29,6 +28,13 @@ get_aio_config_bool() {
   fi
 }
 
+if [ ! -f "$STW_CONFIG_FILE" ]; then
+  touch "$STW_CONFIG_FILE"
+fi
+
+if [ ! -f "$AIO_CONFIG_FILE" ]; then
+  touch "$AIO_CONFIG_FILE"
+fi
 
 if [ "$(get_aio_config_bool 'skip-secure-check' 'false')" = "false" ] && [ -f "$AIO_LOCK" ]; then
     if [ "$DATA_VERSION" != "$(cat "$AIO_LOCK")" ]; then
@@ -104,7 +110,7 @@ log_file_config() {
   set_key 'tracer.log.level' '"trace"' | \
   set_key 'tracer.log.path' '"/var/log"' | \
   set_key 'tracer.log.prefix' '"stalwart.log"' | \
-  set_key 'tracer.log.rotate' '"dayly"' | \
+  set_key 'tracer.log.rotate' '"daily"' | \
   set_key 'tracer.log.ansi' 'false' | \
   set_key 'tracer.log.enable' 'true'
 }
@@ -156,7 +162,7 @@ if [ "$(get_aio_config_bool 'manage.certificate' 'true')" = "true" ]; then
   done
 
   [ -f "$AIO_PUB" ] && cp "$AIO_PUB" "$CERT_PUP"
-  while ! [ -f $CERT_PUP ]; do
+  while ! [ -f "$CERT_PUP" ]; do
       echo "Waiting for cert to get created..."
       sleep 5
       [ -f "$AIO_PUB" ] && cp "$AIO_PUB" "$CERT_PUP"
@@ -165,5 +171,6 @@ fi
 
 echo "Stalwart container started"
 
-# Run the normal entrypoint
-/usr/local/bin/entrypoint.sh
+# See https://github.com/stalwartlabs/mail-server/blob/main/resources/docker/entrypoint.sh
+
+exec /usr/local/bin/stalwart-mail --config /opt/stalwart-mail/etc/config.toml
