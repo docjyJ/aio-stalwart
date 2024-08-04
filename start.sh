@@ -1,176 +1,135 @@
 #!/bin/sh
 
-AIO_LOCK="/opt/stalwart-mail/aio.lock"
-DATA_VERSION="0.9"
-
-STW_CONFIG_FILE="/opt/stalwart-mail/config/config.toml"
-AIO_CONFIG_FILE="/opt/stalwart-mail/config/nc-aio-config.toml"
-
-set_key() {
-  sed "/^$1\s*=\s*.*/d"
-  echo "$1 = $2"
-}
-
-get_key() {
-  grep "$2" "$1" | sed "s/$2\s*=\s*[\"']?(.*)[\"']?/\1/"
-}
-
-get_aio_config_bool() {
-  value=$(get_key "$AIO_CONFIG_FILE" "$1")
-  if [ "$value" = "false" ]; then
-    echo "false"
-  elif [ "$value" = "true" ]; then
-    echo "true"
-  else
-    set_key "$1" "$2" <"$AIO_CONFIG_FILE" >"/tmp$AIO_CONFIG_FILE"
-    mv -f "/tmp$AIO_CONFIG_FILE" "$AIO_CONFIG_FILE"
-    echo "$2"
-  fi
-}
-
-if [ ! -f "$STW_CONFIG_FILE" ]; then
-  touch "$STW_CONFIG_FILE"
+if [ -f '/opt/stalwart-mail/config/aio-config.env' ]; then
+  cat > '/opt/stalwart-mail/config/aio-config.env' << EOF
+ENSURE_WEB_PORT_CONFIG=ON
+ENSURE_MAIL_PORT_CONFIG=ON
+ENSURE_STORAGE_CONFIG=ON
+ENSURE_DIRECTORY_CONFIG=ON
+ENSURE_FILE_LOGGING_CONFIG=ON
+ENSURE_CONSOLE_LOGGING_CONFIG=ON
+ENSURE_FALLBACK_ADMIN_CONFIG
+AUTO_CONFIG_TLS_CERT=ON
+EOF
 fi
+. '/opt/stalwart-mail/config/aio-config.env'
 
-if [ ! -f "$AIO_CONFIG_FILE" ]; then
-  touch "$AIO_CONFIG_FILE"
-fi
-
-if [ "$(get_aio_config_bool 'skip-secure-check' 'false')" = "false" ] && [ -f "$AIO_LOCK" ]; then
+if [ "$SECURE_DATA_AFTER_UPGRADE" != "OFF" ]; then
+  AIO_LOCK="/opt/stalwart-mail/aio.lock"
+  DATA_VERSION="0.9"
+  if [ -f "$AIO_LOCK" ]; then
     if [ "$DATA_VERSION" != "$(cat "$AIO_LOCK")" ]; then
-        echo "Your data is in an old format."
-        echo "Make a backup and see https://github.com/docjyJ/aio-stalwart#Upgrading"
-        echo "To avoid any loss of data, Stalwart will not launch."
-        exit 1
+      echo "Your data is in an old format."
+      echo "Make a backup and see https://github.com/docjyJ/aio-stalwart#Upgrading"
+      echo "To avoid any loss of data, Stalwart will not launch."
+    exit 1
     fi
-else
+  else
     echo "$DATA_VERSION" > "$AIO_LOCK"
+  fi
 fi
-
-
 
 # See https://github.com/stalwartlabs/mail-server/blob/main/resources/config/config.toml
 
-mail_binding_config() {
-  set_key 'server.listener.smtp.bind' '"[::]:25"' | \
-  set_key 'server.listener.smtp.protocol' '"smtp"' | \
-  set_key 'server.listener.smtp.tls.implicit' 'false' | \
-  set_key 'server.listener.submissions.bind' '"[::]:465"' | \
-  set_key 'server.listener.submissions.protocol' '"smtp"' | \
-  set_key 'server.listener.submissions.tls.implicit' 'true' | \
-  set_key 'server.listener.imaps.bind' '"[::]:993"' | \
-  set_key 'server.listener.imaps.protocol' '"imap"' | \
-  set_key 'server.listener.imaps.tls.implicit' 'true'
-}
+STW_CONFIG_FILE="/opt/stalwart-mail/config/config.toml"
+echo >> "$STW_CONFIG_FILE"
 
-if [ "$(get_aio_config_bool 'manage.binding.mail' 'true')" = "true" ]; then
-  mail_binding_config <"$STW_CONFIG_FILE" >"/tmp$STW_CONFIG_FILE"
-  mv -f "/tmp$STW_CONFIG_FILE" "$STW_CONFIG_FILE"
+if [ "$ENSURE_MAIL_PORT_CONFIG" != "OFF" ]; then
+  sed -i '/^server\.listener\.aio-(smtp|submissions|imaps)\./d' "$STW_CONFIG_FILE"
+  cat >> "$STW_CONFIG_FILE" << EOF
+server.listener.aio-smtp.bind = "[::]:25"
+server.listener.aio-smtp.protocol = "smtp"
+server.listener.aio-submissions.bind = "[::]:465"
+server.listener.aio-submissions.protocol = "smtp"
+server.listener.aio-submissions.tls.implicit = true
+server.listener.aio-imaps.bind = "[::]:993"
+server.listener.aio-imaps.protocol = "imap"
+server.listener.aio-imaps.tls.implicit = true
+EOF
 fi
 
-web_binding_config() {
-  set_key 'server.listener.caddy-aio.bind' '"[::]:10003"' | \
-  set_key 'server.listener.caddy-aio.protocol' '"http"' | \
-  set_key 'server.listener.caddy-aio.tls.implicit' 'false'
-}
-
-if [ "$(get_aio_config_bool 'manage.binding.caddy-web' 'true')" = "true" ]; then
-  web_binding_config <"$STW_CONFIG_FILE" >"/tmp$STW_CONFIG_FILE"
-  mv -f "/tmp$STW_CONFIG_FILE" "$STW_CONFIG_FILE"
+if [ "$ENSURE_WEB_PORT_CONFIG" != "OFF" ]; then
+  sed -i '/^server\.listener\.aio-caddy\./d' "$STW_CONFIG_FILE"
+  cat >> "$STW_CONFIG_FILE" << EOF
+server.listener.aio-caddy.bind = "[::]:10003"
+server.listener.aio-caddy.protocol = "http"
+EOF
 fi
 
-storage_config() {
-  set_key 'store.rocksdb.type' '"rocksdb"' | \
-  set_key 'store.rocksdb.path' '"/opt/stalwart-mail/data/rocksdb"' | \
-  set_key 'store.rocksdb.compression' '"lz4"' | \
-  set_key 'storage.data' '"rocksdb"' | \
-  set_key 'storage.fts' '"rocksdb"' | \
-  set_key 'storage.blob' '"rocksdb"' | \
-  set_key 'storage.lookup' '"rocksdb"'
-}
-
-if [ "$(get_aio_config_bool 'manage.storage.data' 'true')" = "true" ]; then
-  storage_config <"$STW_CONFIG_FILE" >"/tmp$STW_CONFIG_FILE"
-  mv -f "/tmp$STW_CONFIG_FILE" "$STW_CONFIG_FILE"
+if [ "$ENSURE_STORAGE_CONFIG" != "OFF" ]; then
+  sed -i '/^store\.aio-rocksdb\./d' "$STW_CONFIG_FILE"
+  sed -i '/^storage\.(data|fts|blob|lookup)/d' "$STW_CONFIG_FILE"
+cat >> "$STW_CONFIG_FILE" << EOF
+store.aio-rocksdb.type = "rocksdb"
+store.aio-rocksdb.path = "/opt/stalwart-mail/data/rocksdb"
+store.aio-rocksdb.compression = "lz4"
+storage.data = "aio-rocksdb"
+storage.fts = "aio-rocksdb"
+storage.blob = "aio-rocksdb"
+storage.lookup = "aio-rocksdb"
+EOF
 fi
 
-directory_config() {
-  set_key 'directory.internal.type' '"internal"' | \
-  set_key 'directory.internal.store' '"rocksdb"' | \
-  set_key 'storage.directory' '"internal"'
-}
-
-if [ "$(get_aio_config_bool 'manage.storage.directory' 'true')" = "true" ]; then
-  directory_config <"$STW_CONFIG_FILE" >"/tmp$STW_CONFIG_FILE"
-  mv -f "/tmp$STW_CONFIG_FILE" "$STW_CONFIG_FILE"
+if [ "$ENSURE_DIRECTORY_CONFIG" != "OFF" ]; then
+  sed -i '/^directory\.internal\./d' "$STW_CONFIG_FILE"
+  sed -i '/^storage\.directory/d' "$STW_CONFIG_FILE"
+cat >> "$STW_CONFIG_FILE" << EOF
+directory.aio-rocksdb.type = "aio-rocksdb"
+directory.aio-rocksdb.store = "aio-rocksdb"
+storage.directory = "aio-rocksdb"
+EOF
 fi
 
-log_file_config() {
-  set_key 'tracer.log.type' '"log"' | \
-  set_key 'tracer.log.level' '"trace"' | \
-  set_key 'tracer.log.path' '"/var/log"' | \
-  set_key 'tracer.log.prefix' '"stalwart.log"' | \
-  set_key 'tracer.log.rotate' '"daily"' | \
-  set_key 'tracer.log.ansi' 'false' | \
-  set_key 'tracer.log.enable' 'true'
-}
-
-if [ "$(get_aio_config_bool 'manage.log.file' 'true')" = "true" ]; then
-  log_file_config <"$STW_CONFIG_FILE" >"/tmp$STW_CONFIG_FILE"
-  mv -f "/tmp$STW_CONFIG_FILE" "$STW_CONFIG_FILE"
+if [ "$ENSURE_FILE_LOGGING_CONFIG" != "OFF" ]; then
+  sed -i '/^tracer\.aio-log\./d' "$STW_CONFIG_FILE"
+  cat >> "$STW_CONFIG_FILE" << EOF
+tracer.aio-log.type = "log"
+tracer.aio-log.level = "trace"
+tracer.aio-log.path = "/var/log"
+tracer.aio-log.prefix = "stalwart.log"
+tracer.aio-log.rotate = "daily"
+tracer.aio-log.ansi = false
+tracer.aio-log.enable = true
+EOF
 fi
 
-stdout_config() {
-  set_key 'tracer.stdout.type' '"stdout"' | \
-  set_key 'tracer.stdout.level' '"trace"' | \
-  set_key 'tracer.stdout.ansi' 'false' | \
-  set_key 'tracer.stdout.enable' 'true'
-}
-
-if [ "$(get_aio_config_bool 'manage.log.stdout' 'true')" = "true" ]; then
-  stdout_config <"$STW_CONFIG_FILE" >"/tmp$STW_CONFIG_FILE"
-  mv -f "/tmp$STW_CONFIG_FILE" "$STW_CONFIG_FILE"
+if [ "$ENSURE_CONSOLE_LOGGING_CONFIG" != "OFF" ]; then
+  sed -i '/^tracer\.aio-stdout\./d' "$STW_CONFIG_FILE"
+  cat >> "$STW_CONFIG_FILE" << EOF
+tracer.aio-stdout.type = "stdout"
+tracer.aio-stdout.level = "trace"
+tracer.aio-stdout.ansi = false
+tracer.aio-stdout.enable = true
+EOF
 fi
 
-admin_config() {
-  set_key 'authentication.fallback-admin.user' '"admin"' | \
-  set_key 'authentication.fallback-admin.secret' '"%{env:STALWART_USER_PASS}%"'
-}
-
-if [ "$(get_aio_config_bool 'manage.admin' 'true')" = "true" ]; then
-  admin_config <"$STW_CONFIG_FILE" >"/tmp$STW_CONFIG_FILE"
-  mv -f "/tmp$STW_CONFIG_FILE" "$STW_CONFIG_FILE"
+if [ "$ENSURE_FALLBACK_ADMIN_CONFIG" != "OFF" ]; then
+  sed -i '/^authentication\.fallback-admin\./d' "$STW_CONFIG_FILE"
+  cat >> "$STW_CONFIG_FILE" << EOF
+authentication.fallback-admin.user = "admin"
+authentication.fallback-admin.secret = "%{env:STALWART_USER_PASS}%"
+EOF
 fi
 
-certificate_config() {
-  set_key 'certificate.caddy-aio.key' "\"%{file:$1}%\"" | \
-  set_key 'certificate.caddy-aio.cert' "\"%{file:$2}%\"" | \
-  set_key 'certificate.caddy-aio.default' 'true'
-}
-
-if [ "$(get_aio_config_bool 'manage.certificate' 'true')" = "true" ]; then
-  AIO_PRIV="/caddy/caddy/certificates/acme-v02.api.letsencrypt.org-directory/mail.$NC_DOMAIN/mail.$NC_DOMAIN.key"
+if [ "$AUTO_CONFIG_TLS_CERT" != "OFF" ]; then
+  AIO_KEY="/caddy/caddy/certificates/acme-v02.api.letsencrypt.org-directory/mail.$NC_DOMAIN/mail.$NC_DOMAIN.key"
   AIO_PUB="/caddy/caddy/certificates/acme-v02.api.letsencrypt.org-directory/mail.$NC_DOMAIN/mail.$NC_DOMAIN.crt"
 
-  certificate_config "$AIO_PRIV" "$AIO_PUB" <"$STW_CONFIG_FILE" >"/tmp$STW_CONFIG_FILE"
+  sed -i '/^certificate\.caddy-aio\./d' "$STW_CONFIG_FILE"
+  cat >> "$STW_CONFIG_FILE" << EOF
+certificate.caddy-aio.key = "%{file:$AIO_PRIV}%"
+certificate.caddy-aio.cert = "%{file:$AIO_PUB}%"
+certificate.caddy-aio.default = true
+EOF
 
-  [ -f "$AIO_PRIV" ] && cp "$AIO_PRIV" "$CERT_PRIV"
-  while ! [ -f "$CERT_PRIV" ]; do
-      echo "Waiting for key to get created..."
-      sleep 5
-      [ -f "$AIO_PRIV" ] && cp "$AIO_PRIV" "$CERT_PRIV"
-  done
-
-  [ -f "$AIO_PUB" ] && cp "$AIO_PUB" "$CERT_PUP"
-  while ! [ -f "$CERT_PUP" ]; do
-      echo "Waiting for cert to get created..."
-      sleep 5
-      [ -f "$AIO_PUB" ] && cp "$AIO_PUB" "$CERT_PUP"
+  while [ ! -f "$AIO_KEY" ] || [ ! -f "$AIO_PUB" ]; do
+    echo "Waiting for cert to get created..."
+    sleep 5
   done
 fi
 
-echo "Stalwart container started"
-
 # See https://github.com/stalwartlabs/mail-server/blob/main/resources/docker/entrypoint.sh
+
+echo "Stalwart initialization complete. Starting Stalwart..."
 
 exec /usr/local/bin/stalwart-mail --config /opt/stalwart-mail/etc/config.toml
