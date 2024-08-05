@@ -90,3 +90,13 @@ If you're using the root user to run docker, read the script before running it.
 ```bash
 curl -s https://raw.githubusercontent.com/docjyJ/aio-stalwart/main/scripts/backup.sh | bash
 ```
+
+### Upgrading from 0.8.x to 0.9.x
+
+This migration does not require any action, but the organization of the database has changed.
+Be vigilant about possible data loss.
+
+To unlock the server blocked by the start script, run this command:
+```bash
+docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail -it --entrypoint /bin/bash stalwartlabs/mail-server:v0.9.0 -c 'echo "0.9" > /opt/stalwart-mail/aio.lock'
+```
