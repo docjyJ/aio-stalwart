@@ -4,7 +4,7 @@ echo -e '\n'
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
   docker stop nextcloud-aio-stalwart
-  docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail -it --entrypoint /bin/bash stalwartlabs/mail-server:v0.7.3 -c 'stalwart-mail --config /opt/stalwart-mail/etc/config.toml --export /opt/stalwart-mail/export'
-  docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail -it --entrypoint /bin/bash stalwartlabs/mail-server:v0.8.0 -c 'stalwart-mail --config /opt/stalwart-mail/etc/config.toml --import /opt/stalwart-mail/export && echo "0.8.0" > /opt/stalwart-mail/aio.lock'
+  docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/bash stalwartlabs/mail-server:v0.7.3 -c 'stalwart-mail --config /opt/stalwart-mail/etc/config.toml --export /opt/stalwart-mail/export'
+  docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/bash stalwartlabs/mail-server:v0.8.0 -c 'stalwart-mail --config /opt/stalwart-mail/etc/config.toml --import /opt/stalwart-mail/export && echo "0.8.0" > /opt/stalwart-mail/aio.lock'
 fi
 echo 'Finished'
