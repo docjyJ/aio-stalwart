@@ -7,7 +7,7 @@ DATA_VERSION="0.9"
 if [ -f "$AIO_LOCK" ]; then
     if [ "$DATA_VERSION" != "$(cat "$AIO_LOCK")" ]; then
         echo "Your data is in an old format."
-        echo "Make a backup and see https://github.com/nextcloud/all-in-one/blob/main/community-containers/stalwart/upgrading.md"
+        echo "Make a backup and see https://github.com/docjyJ/aio-stalwart#Upgrading"
         echo "To avoid any loss of data, Stalwart will not launch."
         exit 1
     fi

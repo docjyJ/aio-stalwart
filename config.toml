@@ -53,8 +53,7 @@ level = "info"
 ansi = false
 enable = true
 
-[lookup."nextcloud-aio"]
-domain = "%{env:NC_DOMAIN}%"
+[lookup.default]
 hostname = "mail.%{env:NC_DOMAIN}%"
 
 [certificate.nextcloud-aio]
