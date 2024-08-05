@@ -13,5 +13,4 @@ updates:
     time: "12:00"
   open-pull-requests-limit: 10
   labels:
-  - 3. to review
-  - dependencies
+  - dependency
