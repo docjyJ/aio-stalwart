@@ -45,7 +45,7 @@ You need to redirect http (or https) traffic from `mail.$NC_DOMAIN` to port `100
 Example with `Caddyfile` syntax:
 ```caddyfile
 https://mail.{$NC_DOMAIN}:443 {
-    reverse_proxy http://{$STALWAER_IP}:10003
+    reverse_proxy http://{$STALWAER_HOSTNAME}:10003
 }
 ```
 
