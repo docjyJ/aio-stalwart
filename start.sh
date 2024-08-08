@@ -3,7 +3,7 @@
 if [ -f '/opt/stalwart-mail/config/aio-config.env' ]; then
   cat > '/opt/stalwart-mail/config/aio-config.env' << EOF
 ENSURE_WEB_PORT_CONFIG=ON
-ENSURE_MAIL_PORT_CONFIG=ON
+ENSURE_MAILS_PORT_CONFIG=ON
 ENSURE_STORAGE_CONFIG=ON
 ENSURE_DIRECTORY_CONFIG=ON
 ENSURE_FILE_LOGGING_CONFIG=ON
