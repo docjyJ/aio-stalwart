@@ -45,7 +45,7 @@ You need to redirect http (or https) traffic from `mail.$NC_DOMAIN` to port `100
 Example with `Caddyfile` syntax:
 ```caddyfile
 https://mail.{$NC_DOMAIN}:443 {
-    reverse_proxy http://{$STALWAER_IP}:10003
+    reverse_proxy http://{$STALWAER_HOSTNAME}:10003
 }
 ```
 
@@ -98,5 +98,5 @@ Be vigilant about possible data loss.
 
 To unlock the server blocked by the start script, run this command:
 ```bash
-docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail -it --entrypoint /bin/bash stalwartlabs/mail-server:v0.9.0 -c 'echo "0.9" > /opt/stalwart-mail/aio.lock'
+docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/bash stalwartlabs/mail-server:v0.9.0 -c 'echo "0.9" > /opt/stalwart-mail/aio.lock'
 ```
