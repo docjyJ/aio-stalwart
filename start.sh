@@ -31,85 +31,113 @@ fi
 
 # See https://github.com/stalwartlabs/mail-server/blob/main/resources/config/config.toml
 
+format_toml() {
+  GROUP=''
+  REG_GROUP='^ *\[ *(.+) *\]( *#.+)?\s*$'
+  REG_ITEM='^ *([^=# ]+) *= *(.+)\s*$'
+  while read i || [ -n "$i" ]; do
+    if [[ $i =~ $REG_GROUP ]]; then
+      GROUP="$(echo "$i" | sed -r "s/$REG_GROUP/\1./g")"
+    elif [[ $i =~ $REG_ITEM ]]; then
+      echo "$GROUP$(echo "$i" | sed -r "s/$REG_ITEM/\1 = \2/g")"
+    fi
+  done
+}
+
+mail_ports() {
+  if [ "$ENSURE_MAILS_PORT_CONFIG" != "OFF" ]; then
+    sed -e '/^server\.listener\.aio-smtp/d' -e '/^server\.listener\.aio-submissions/d' -e '/^server\.listener\.aio-imaps/d'
+    echo 'server.listener.aio-smtp.bind = "[::]:25"'
+    echo 'server.listener.aio-smtp.protocol = "smtp"'
+    echo 'server.listener.aio-submissions.bind = "[::]:465"'
+    echo 'server.listener.aio-submissions.protocol = "smtp"'
+    echo 'server.listener.aio-submissions.tls.implicit = true'
+    echo 'server.listener.aio-imaps.bind = "[::]:993"'
+    echo 'server.listener.aio-imaps.protocol = "imap"'
+    echo 'server.listener.aio-imaps.tls.implicit = true'
+  else
+    cat
+  fi
+}
+
+web_port() {
+  if [ "$ENSURE_WEB_PORT_CONFIG" != "OFF" ]; then
+    sed -e '/^server\.listener\.aio-caddy\./d'
+    echo 'server.listener.aio-caddy.bind = "[::]:10003"'
+    echo 'server.listener.aio-caddy.protocol = "http"'
+  else
+    cat
+  fi
+}
+
+storage_port() {
+  if [ "$ENSURE_STORAGE_CONFIG" != "OFF" ]; then
+    sed -e '/^store\.aio-rocksdb\./d' -e '/^storage\.data/d' -e '/^storage\.fts/d' -e '/^storage\.blob/d' -e '/^storage\.lookup/d'
+    echo 'store.aio-rocksdb.type = "rocksdb"'
+    echo 'store.aio-rocksdb.path = "/opt/stalwart-mail/data/rocksdb"'
+    echo 'store.aio-rocksdb.compression = "lz4"'
+    echo 'storage.data = "aio-rocksdb"'
+    echo 'storage.fts = "aio-rocksdb"'
+    echo 'storage.blob = "aio-rocksdb"'
+    echo 'storage.lookup = "aio-rocksdb"'
+  else
+    cat
+  fi
+}
+
+directory() {
+  if [ "$ENSURE_DIRECTORY_CONFIG" != "OFF" ]; then
+    sed -e '/^directory\.internal\./d' -e '/^storage\.directory/d'
+    echo 'directory.aio-rocksdb.type = "aio-rocksdb"'
+    echo 'directory.aio-rocksdb.store = "aio-rocksdb"'
+    echo 'storage.directory = "aio-rocksdb"'
+  else
+    cat
+  fi
+}
+
+file_logging() {
+  if [ "$ENSURE_FILE_LOGGING_CONFIG" != "OFF" ]; then
+    sed -e '/^tracer\.aio-log\./d'
+    echo 'tracer.aio-log.type = "log"'
+    echo 'tracer.aio-log.level = "trace"'
+    echo 'tracer.aio-log.path = "/var/log"'
+    echo 'tracer.aio-log.prefix = "stalwart.log"'
+    echo 'tracer.aio-log.rotate = "daily"'
+    echo 'tracer.aio-log.ansi = false'
+    echo 'tracer.aio-log.enable = true'
+  else
+    cat
+  fi
+}
+
+console_logging() {
+  if [ "$ENSURE_CONSOLE_LOGGING_CONFIG" != "OFF" ]; then
+    sed -e '/^tracer\.aio-stdout\./d'
+    echo 'tracer.aio-stdout.type = "stdout"'
+    echo 'tracer.aio-stdout.level = "trace"'
+    echo 'tracer.aio-stdout.ansi = false'
+    echo 'tracer.aio-stdout.enable = true'
+  else
+    cat
+  fi
+}
+
+fallback_admin() {
+  if [ "$ENSURE_FALLBACK_ADMIN_CONFIG" != "OFF" ]; then
+    sed -e '/^authentication\.fallback-admin\./d'
+    echo 'authentication.fallback-admin.user = "admin"'
+    echo 'authentication.fallback-admin.secret = "%{env:STALWART_USER_PASS}%"'
+  else
+    cat
+  fi
+}
+
 STW_CONFIG_FILE="/opt/stalwart-mail/config/config.toml"
-echo >> "$STW_CONFIG_FILE"
 
-if [ "$ENSURE_MAIL_PORT_CONFIG" != "OFF" ]; then
-  sed -i '/^server\.listener\.aio-(smtp|submissions|imaps)\./d' "$STW_CONFIG_FILE"
-  cat >> "$STW_CONFIG_FILE" << EOF
-server.listener.aio-smtp.bind = "[::]:25"
-server.listener.aio-smtp.protocol = "smtp"
-server.listener.aio-submissions.bind = "[::]:465"
-server.listener.aio-submissions.protocol = "smtp"
-server.listener.aio-submissions.tls.implicit = true
-server.listener.aio-imaps.bind = "[::]:993"
-server.listener.aio-imaps.protocol = "imap"
-server.listener.aio-imaps.tls.implicit = true
-EOF
-fi
+cat "$STW_CONFIG_FILE" > "$STW_CONFIG_FILE.log"
+cat "$STW_CONFIG_FILE.log" | format_toml | mail_ports | web_port | storage_port | directory | file_logging | console_logging | fallback_admin | sort > "$STW_CONFIG_FILE"
 
-if [ "$ENSURE_WEB_PORT_CONFIG" != "OFF" ]; then
-  sed -i '/^server\.listener\.aio-caddy\./d' "$STW_CONFIG_FILE"
-  cat >> "$STW_CONFIG_FILE" << EOF
-server.listener.aio-caddy.bind = "[::]:10003"
-server.listener.aio-caddy.protocol = "http"
-EOF
-fi
-
-if [ "$ENSURE_STORAGE_CONFIG" != "OFF" ]; then
-  sed -i '/^store\.aio-rocksdb\./d' "$STW_CONFIG_FILE"
-  sed -i '/^storage\.(data|fts|blob|lookup)/d' "$STW_CONFIG_FILE"
-cat >> "$STW_CONFIG_FILE" << EOF
-store.aio-rocksdb.type = "rocksdb"
-store.aio-rocksdb.path = "/opt/stalwart-mail/data/rocksdb"
-store.aio-rocksdb.compression = "lz4"
-storage.data = "aio-rocksdb"
-storage.fts = "aio-rocksdb"
-storage.blob = "aio-rocksdb"
-storage.lookup = "aio-rocksdb"
-EOF
-fi
-
-if [ "$ENSURE_DIRECTORY_CONFIG" != "OFF" ]; then
-  sed -i '/^directory\.internal\./d' "$STW_CONFIG_FILE"
-  sed -i '/^storage\.directory/d' "$STW_CONFIG_FILE"
-cat >> "$STW_CONFIG_FILE" << EOF
-directory.aio-rocksdb.type = "aio-rocksdb"
-directory.aio-rocksdb.store = "aio-rocksdb"
-storage.directory = "aio-rocksdb"
-EOF
-fi
-
-if [ "$ENSURE_FILE_LOGGING_CONFIG" != "OFF" ]; then
-  sed -i '/^tracer\.aio-log\./d' "$STW_CONFIG_FILE"
-  cat >> "$STW_CONFIG_FILE" << EOF
-tracer.aio-log.type = "log"
-tracer.aio-log.level = "trace"
-tracer.aio-log.path = "/var/log"
-tracer.aio-log.prefix = "stalwart.log"
-tracer.aio-log.rotate = "daily"
-tracer.aio-log.ansi = false
-tracer.aio-log.enable = true
-EOF
-fi
-
-if [ "$ENSURE_CONSOLE_LOGGING_CONFIG" != "OFF" ]; then
-  sed -i '/^tracer\.aio-stdout\./d' "$STW_CONFIG_FILE"
-  cat >> "$STW_CONFIG_FILE" << EOF
-tracer.aio-stdout.type = "stdout"
-tracer.aio-stdout.level = "trace"
-tracer.aio-stdout.ansi = false
-tracer.aio-stdout.enable = true
-EOF
-fi
-
-if [ "$ENSURE_FALLBACK_ADMIN_CONFIG" != "OFF" ]; then
-  sed -i '/^authentication\.fallback-admin\./d' "$STW_CONFIG_FILE"
-  cat >> "$STW_CONFIG_FILE" << EOF
-authentication.fallback-admin.user = "admin"
-authentication.fallback-admin.secret = "%{env:STALWART_USER_PASS}%"
-EOF
-fi
 
 if [ "$AUTO_CONFIG_TLS_CERT" != "OFF" ]; then
   AIO_KEY="/caddy/caddy/certificates/acme-v02.api.letsencrypt.org-directory/mail.$NC_DOMAIN/mail.$NC_DOMAIN.key"
