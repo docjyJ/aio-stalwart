@@ -65,10 +65,10 @@ function submission_port() {
   fi
 
   if [ "$ENSURE_SUBMISSION_PORT_CONFIG" = "ON" ]; then
-    sed -e '/^server\.listener\.aio-submissions/d'
-    echo 'server.listener.aio-submissions.bind = "[::]:587"'
-    echo 'server.listener.aio-submissions.protocol = "smtp"'
-    echo 'server.listener.aio-submissions.tls.implicit = true'
+    sed -e '/^server\.listener\.aio-submission/d'
+    echo 'server.listener.aio-submission.bind = "[::]:587"'
+    echo 'server.listener.aio-submission.protocol = "smtp"'
+    echo 'server.listener.aio-submission.tls.implicit = true'
   else
     cat
   fi
@@ -123,11 +123,11 @@ function web_port() {
 
 function managesieve_port() {
   if [ -z "$ENSURE_MANAGESIEVE_PORT_CONFIG" ]; then
-    echo 'ENSURE_MANAGESIEVE_PORT_CONFIG="OFF"' >> "$STW_AIO_ENV"
-    ENSURE_MANAGESIEVE_PORT_CONFIG="OFF"
+    echo 'ENSURE_MANAGESIEVE_PORT_CONFIG="ON"' >> "$STW_AIO_ENV"
+    ENSURE_MANAGESIEVE_PORT_CONFIG="ON"
   fi
 
-  if [ "$ENSURE_MANAGESIEVE_PORT_CONFIG" = "ON" ]; then
+  if [ "$ENSURE_MANAGESIEVE_PORT_CONFIG" != "OFF" ]; then
     sed -e '/^server\.listener\.aio-managesieve/d'
     echo 'server.listener.aio-managesieve.bind = "[::]:4190"'
     echo 'server.listener.aio-managesieve.protocol = "managesieve"'
