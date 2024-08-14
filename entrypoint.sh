@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ ! -f '/opt/stalwart-mail/etc/aio-config.env' ]; then
   mkdir -p '/opt/stalwart-mail/etc'
@@ -6,7 +6,6 @@ if [ ! -f '/opt/stalwart-mail/etc/aio-config.env' ]; then
 fi
 
 . '/opt/stalwart-mail/etc/aio-config.env'
-
 
 STW_CONFIG_FILE="/opt/stalwart-mail/etc/config.toml"
 STW_AIO_ENV="/opt/stalwart-mail/etc/aio-config.env"
@@ -33,18 +32,18 @@ fi
 
 # See https://github.com/stalwartlabs/mail-server/blob/main/resources/config/config.toml
 
-format_toml() {
+function format_toml() {
   GROUP=''
-  while read -r i || [ -n "$i" ]; do
-    if echo "$i" | grep -qE '^ *\[ *(.+) *\]( *#.+)?\s*$'; then
-      GROUP="$(echo "$i" | sed -r 's/^ *\[ *(.+) *\]( *#.+)?\s*$/\1./g')"
-    elif echo "$i" | grep -qE '^ *([^=# ]+) *= *(.+)\s*$'; then
-      echo "$GROUP$(echo "$i" | sed -r 's/^ *([^=# ]+) *= *(.+)\s*$/\1 = \2/g')"
+  while IFS= read -r i || [ -n "$i" ]; do
+    if [[ "$i" =~ ^[[:space:]]*\[[[:space:]]*(.+)[[:space:]]*\](.*)?[[:space:]]*$ ]]; then
+      GROUP="${BASH_REMATCH[1]}."
+    elif [[ "$i" =~ ^[[:space:]]*([^=#[:space:]]+)[[:space:]]*=[[:space:]]*(.+)[[:space:]]*$ ]]; then
+      echo "$GROUP${BASH_REMATCH[1]} = ${BASH_REMATCH[2]}"
     fi
   done
 }
 
-mail_port() {
+function mail_port() {
   if [ -z "$ENSURE_MAIL_PORT_CONFIG" ]; then
     echo 'ENSURE_MAIL_PORT_CONFIG="ON"' >> "$STW_AIO_ENV"
     ENSURE_MAIL_PORT_CONFIG="ON"
@@ -59,7 +58,7 @@ mail_port() {
   fi
 }
 
-submission_port() {
+function submission_port() {
   if [ -z "$ENSURE_SUBMISSION_PORT_CONFIG" ]; then
     echo 'ENSURE_SUBMISSION_PORT_CONFIG="ON"' >> "$STW_AIO_ENV"
     ENSURE_SUBMISSION_PORT_CONFIG="ON"
@@ -75,7 +74,7 @@ submission_port() {
   fi
 }
 
-imap_port() {
+function imap_port() {
   if [ -z "$ENSURE_IMAP_PORT_CONFIG" ]; then
     echo 'ENSURE_IMAP_PORT_CONFIG="ON"' >> "$STW_AIO_ENV"
     ENSURE_IMAP_PORT_CONFIG="ON"
@@ -91,23 +90,23 @@ imap_port() {
   fi
 }
 
-pop3_port() {
-  if [ -z "$ENSURE_POP3_PORT_CONFIG" ]; then
-    echo 'ENSURE_POP3_PORT_CONFIG="OFF"' >> "$STW_AIO_ENV"
-    ENSURE_POP3_PORT_CONFIG="OFF"
-  fi
+#function pop3_port() {
+#  if [ -z "$ENSURE_POP3_PORT_CONFIG" ]; then
+#    echo 'ENSURE_POP3_PORT_CONFIG="OFF"' >> "$STW_AIO_ENV"
+#    ENSURE_POP3_PORT_CONFIG="OFF"
+#  fi
+#
+#  if [ "$ENSURE_POP3_PORT_CONFIG" = "ON" ]; then
+#    sed -e '/^server\.listener\.aio-pop3/d'
+#    echo 'server.listener.aio-pop3.bind = "[::]:995"'
+#    echo 'server.listener.aio-pop3.protocol = "pop3"'
+#    echo 'server.listener.aio-pop3.tls.implicit = true'
+#  else
+#    cat
+#  fi
+#}
 
-  if [ "$ENSURE_POP3_PORT_CONFIG" = "ON" ]; then
-    sed -e '/^server\.listener\.aio-pop3/d'
-    echo 'server.listener.aio-pop3.bind = "[::]:995"'
-    echo 'server.listener.aio-pop3.protocol = "pop3"'
-    echo 'server.listener.aio-pop3.tls.implicit = true'
-  else
-    cat
-  fi
-}
-
-web_port() {
+function web_port() {
   if [ -z "$ENSURE_WEB_PORT_CONFIG" ]; then
     echo 'ENSURE_WEB_PORT_CONFIG="ON"' >> "$STW_AIO_ENV"
     ENSURE_WEB_PORT_CONFIG="ON"
@@ -122,7 +121,7 @@ web_port() {
   fi
 }
 
-managesieve_port() {
+function managesieve_port() {
   if [ -z "$ENSURE_MANAGESIEVE_PORT_CONFIG" ]; then
     echo 'ENSURE_MANAGESIEVE_PORT_CONFIG="OFF"' >> "$STW_AIO_ENV"
     ENSURE_MANAGESIEVE_PORT_CONFIG="OFF"
@@ -138,7 +137,7 @@ managesieve_port() {
   fi
 }
 
-storage() {
+function storage() {
   if [ -z "$ENSURE_STORAGE_CONFIG" ]; then
     echo 'ENSURE_STORAGE_CONFIG="ON"' >> "$STW_AIO_ENV"
     ENSURE_STORAGE_CONFIG="ON"
@@ -158,7 +157,7 @@ storage() {
   fi
 }
 
-directory() {
+function directory() {
   if [ -z "$ENSURE_DIRECTORY_CONFIG" ]; then
     echo 'ENSURE_DIRECTORY_CONFIG="ON"' >> "$STW_AIO_ENV"
     ENSURE_DIRECTORY_CONFIG="ON"
@@ -174,7 +173,7 @@ directory() {
   fi
 }
 
-file_logging() {
+function file_logging() {
   if [ -z "$ENSURE_FILE_LOGGING_CONFIG" ]; then
     echo 'ENSURE_FILE_LOGGING_CONFIG="ON"' >> "$STW_AIO_ENV"
     ENSURE_FILE_LOGGING_CONFIG="ON"
@@ -194,7 +193,7 @@ file_logging() {
   fi
 }
 
-console_logging() {
+function console_logging() {
   if [ -z "$ENSURE_CONSOLE_LOGGING_CONFIG" ]; then
     echo 'ENSURE_CONSOLE_LOGGING_CONFIG="ON"' >> "$STW_AIO_ENV"
     ENSURE_CONSOLE_LOGGING_CONFIG="ON"
@@ -211,7 +210,7 @@ console_logging() {
   fi
 }
 
-fallback_admin() {
+function fallback_admin() {
   if [ -z "$ENSURE_FALLBACK_ADMIN_CONFIG" ]; then
     echo 'ENSURE_FALLBACK_ADMIN_CONFIG="ON"' >> "$STW_AIO_ENV"
     ENSURE_FALLBACK_ADMIN_CONFIG="ON"
@@ -226,7 +225,7 @@ fallback_admin() {
   fi
 }
 
-auto_config_cert() {
+function auto_config_cert() {
   if [ -z "$AUTO_CONFIG_TLS_CERT" ]; then
     echo 'AUTO_CONFIG_TLS_CERT="ON"' >> "$STW_AIO_ENV"
     AUTO_CONFIG_TLS_CERT="ON"
@@ -235,20 +234,20 @@ auto_config_cert() {
   if [ "$AUTO_CONFIG_TLS_CERT" = "ON" ]; then
     if [ -z "$NC_DOMAIN" ]; then
       >&2 echo "NC_DOMAIN is not set."
-      exit 1
-    fi
+      cat > /dev/null
+    else
+      AIO_KEY="/caddy/caddy/certificates/acme-v02.api.letsencrypt.org-directory/mail.$NC_DOMAIN/mail.$NC_DOMAIN.key"
+      AIO_PUB="/caddy/caddy/certificates/acme-v02.api.letsencrypt.org-directory/mail.$NC_DOMAIN/mail.$NC_DOMAIN.crt"
 
-    AIO_KEY="/caddy/caddy/certificates/acme-v02.api.letsencrypt.org-directory/mail.$NC_DOMAIN/mail.$NC_DOMAIN.key"
-    AIO_PUB="/caddy/caddy/certificates/acme-v02.api.letsencrypt.org-directory/mail.$NC_DOMAIN/mail.$NC_DOMAIN.crt"
-
-    sed -e '/^certificate\.caddy-aio\./d'
-    echo "certificate.caddy-aio.key = \"%{file:$AIO_KEY}%\""
-    echo "certificate.caddy-aio.cert = \"%{file:$AIO_PUB}%\""
+      sed -e '/^certificate\.caddy-aio\./d'
+      echo "certificate.caddy-aio.key = \"%{file:$AIO_KEY}%\""
+      echo "certificate.caddy-aio.cert = \"%{file:$AIO_PUB}%\""
 
       while [ ! -f "$AIO_KEY" ] || [ ! -f "$AIO_PUB" ]; do
         >&2 echo "Waiting for cert to get created..."
         sleep 5
       done
+    fi
   else
     cat
   fi
@@ -264,7 +263,6 @@ format_toml < "$STW_CONFIG_FILE.old" | \
   mail_port | \
   submission_port | \
   imap_port | \
-  pop3_port | \
   web_port | \
   managesieve_port | \
   storage | \
@@ -275,8 +273,12 @@ format_toml < "$STW_CONFIG_FILE.old" | \
   auto_config_cert | \
   sort > "$STW_CONFIG_FILE"
 
-# See https://github.com/stalwartlabs/mail-server/blob/main/resources/docker/entrypoint.sh
+if [ ! -s "$STW_CONFIG_FILE" ]; then
+  rm "$STW_CONFIG_FILE"
+  >&2 echo "Failed to generate config file."
+  exit 1
+fi
 
 echo "Stalwart initialization complete. Starting Stalwart..."
 
-exec /usr/local/bin/stalwart-mail --config /opt/stalwart-mail/etc/config.toml
+exec "$@"
