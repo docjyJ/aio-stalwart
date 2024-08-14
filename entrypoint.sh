@@ -5,7 +5,7 @@ if [ ! -f '/opt/stalwart-mail/etc/aio-config.env' ]; then
   echo '## REMOVE VARIABLES BELOW IF YOU WANT TO USE DEFAULT VALUES ##' > '/opt/stalwart-mail/etc/aio-config.env'
 fi
 
-. '/opt/stalwart-mail/etc/aio-config.env'
+source '/opt/stalwart-mail/etc/aio-config.env'
 
 STW_CONFIG_FILE="/opt/stalwart-mail/etc/config.toml"
 STW_AIO_ENV="/opt/stalwart-mail/etc/aio-config.env"
