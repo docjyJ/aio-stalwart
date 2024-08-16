@@ -36,6 +36,8 @@ After installation on nextcloud go to `https://mail.$NC_DOMAIN/login` and login 
 
 Once connected, add a domain, configure your DNS zone and create your users.
 
+Additionally, you might want to install and configure [snappymail](https://apps.nextcloud.com/apps/snappymail) or [mail](https://apps.nextcloud.com/apps/mail) inside Nextcloud in order to use your mail accounts for sending and retrieving mails.
+
 ## Advanced configuration
 
 > [!IMPORTANT]
