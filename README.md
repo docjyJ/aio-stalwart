@@ -132,20 +132,72 @@ Be vigilant about possible data loss.
 The entrypoint script changes to. Be careful if you have made on settings managed by the entrypoint script.
 See [Options](#options).
 
-To unlock the server blocked by the start script, run the script [`update_0.8_to_0.9.sh`](https://github.com/docjyJ/aio-stalwart/blob/main/scripts/update_0.8_to_0.9.sh) (please read it before running it).
+To unlock the server use the following command:
 ```bash
-curl -s https://raw.githubusercontent.com/docjyJ/aio-stalwart/main/scripts/update_0.8_to_0.9.sh | bash
+# verify the data version is in '0.8.0'
+docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server:v0.8.0 /opt/stalwart-mail/aio.lock
+
+# Backup your configuration file
+docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server:v0.8.0 /opt/stalwart-mail/etc/config.toml > config.toml
+
+# Set the new data version
+docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/sed stalwartlabs/mail-server:v0.9.0 -i 's/^0.8.0$/0.9/g' /opt/stalwart-mail/aio.lock
+```
+
+Then, go inside your AIO panel and restart and upgrade your container.
+
+You can verify your config file with the following command after starting the container:
+```bash
+docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server:v0.9.0 /opt/stalwart-mail/etc/config.toml
 ```
 
 
 ### Upgrading from 0.7.x to 0.8.x
 
-Run the script [`update_0.7_to_0.8.sh`](https://github.com/docjyJ/aio-stalwart/blob/main/scripts/update_0.7_to_0.8.sh) to update the data.
-
-Please before upgrading, do a backup of your data !
-
-If you're using the root user to run docker, read the script before running it.
+To upgrade from 0.7.x to 0.8.x, you need to run the following command:
 
 ```bash
-curl -s https://raw.githubusercontent.com/docjyJ/aio-stalwart/main/scripts/update_0.7_to_0.8.sh | bash
+# Stop stalwart-mail container
+docker stop nextcloud-aio-stalwart
+
+# Go inside container in 0.7.3
+docker run --rm -it -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/bash stalwartlabs/mail-server:v0.7.3
 ```
+    
+Then, run the following command inside the container:
+
+```bash
+# Verify the dataversion is in '0.7.0'
+cat /opt/stalwart-mail/aio.lock
+
+# Export the data
+stalwart-mail --config /opt/stalwart-mail/etc/config.toml --export /opt/stalwart-mail/export
+
+# Exit the container
+exit
+```
+
+Finally, run the following command to upgrade to 0.8.x:
+
+```bash
+# Go inside container in 0.8.0
+docker run --rm -it -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/bash stalwartlabs/mail-server:v0.8.0
+```
+
+> [!NOTE]
+> You can do a backup in the AIO panel before continuing.
+
+Then, run the following command inside the container:
+
+```bash
+# Import the data
+stalwart-mail --config /opt/stalwart-mail/etc/config.toml --import /opt/stalwart-mail/export
+
+# Set the new dataversion
+sed -i 's/^0.7.0$/0.8.0/g' /opt/stalwart-mail/aio.lock
+
+# Exit the container
+exit
+```
+
+Now go inside your AIO panel and restart and upgrade your container.
