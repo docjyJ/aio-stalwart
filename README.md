@@ -45,6 +45,10 @@ Additionally, you might want to install and configure [snappymail](https://apps.
 > 
 > This prevents you from making changes that break links with Nextcloud and the Caddy Community Container.
 
+See the [Stalwart FAQ](https://stalw.art/docs/faq) to see all possibilities.
+
+For any question [open an issue](https://github.com/docjyj/aio-stalwart/issues)!
+
 ### Change the admin password
 
 Before changing the password, make sure to disable the automatic configuration of the fallback admin. See [Options](#options).
