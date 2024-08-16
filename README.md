@@ -4,7 +4,7 @@
 > [!WARNING]
 > Stalwart and nextcloud community containers are solutions under development.
 >
-> Additionally, hosting your own mail server is one of the most difficult services to deploy.
+> Additionally, be aware that the mail server is the most difficult service to deploy.
 > 
 > I try my best to make this as simple as possible. This solution is quite stable (I use it for my cloud) but it is not enterprise quality.
 > 
