@@ -3,9 +3,9 @@
 if [ ! -f '/opt/stalwart-mail/etc/aio-config.env' ]; then
   mkdir -p '/opt/stalwart-mail/etc'
   echo '## REMOVE VARIABLES BELOW IF YOU WANT TO USE DEFAULT VALUES ##' > '/opt/stalwart-mail/etc/aio-config.env'
+else
+  source '/opt/stalwart-mail/etc/aio-config.env'
 fi
-
-source '/opt/stalwart-mail/etc/aio-config.env'
 
 STW_CONFIG_FILE="/opt/stalwart-mail/etc/config.toml"
 STW_AIO_ENV="/opt/stalwart-mail/etc/aio-config.env"
