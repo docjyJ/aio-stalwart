@@ -4,6 +4,7 @@ if [ ! -f '/opt/stalwart-mail/etc/aio-config.env' ]; then
   mkdir -p '/opt/stalwart-mail/etc'
   echo '## REMOVE VARIABLES BELOW IF YOU WANT TO USE DEFAULT VALUES ##' > '/opt/stalwart-mail/etc/aio-config.env'
 else
+  # shellcheck disable=SC1091
   source '/opt/stalwart-mail/etc/aio-config.env'
 fi
 
