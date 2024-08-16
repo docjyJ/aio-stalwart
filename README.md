@@ -1,3 +1,6 @@
+> [!CAUTION]
+> Do not use this feature as a main mail server, without a redundancy system and without knowledge.
+ 
 > [!WARNING]
 > Stalwart and nextcloud community containers are solutions under development.
 >
