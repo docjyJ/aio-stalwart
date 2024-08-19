@@ -166,7 +166,7 @@ function directory() {
 
   if [ "$ENSURE_DIRECTORY_CONFIG" = "ON" ]; then
     sed -e '/^directory\.aio-rocksdb\./d' -e '/^storage\.directory/d'
-    echo 'directory.aio-rocksdb.type = "aio-rocksdb"'
+    echo 'directory.aio-rocksdb.type = "internal"'
     echo 'directory.aio-rocksdb.store = "aio-rocksdb"'
     echo 'storage.directory = "aio-rocksdb"'
   else
