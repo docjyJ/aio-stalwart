@@ -147,7 +147,7 @@ function storage() {
   if [ "$ENSURE_STORAGE_CONFIG" = "ON" ]; then
     sed -e '/^store\.aio-rocksdb\./d' -e '/^storage\.data/d' -e '/^storage\.fts/d' -e '/^storage\.blob/d' -e '/^storage\.lookup/d'
     echo 'store.aio-rocksdb.type = "rocksdb"'
-    echo 'store.aio-rocksdb.path = "/opt/stalwart-mail/data/rocksdb"'
+    echo 'store.aio-rocksdb.path = "/opt/stalwart-mail/data"'
     echo 'store.aio-rocksdb.compression = "lz4"'
     echo 'storage.data = "aio-rocksdb"'
     echo 'storage.fts = "aio-rocksdb"'
@@ -165,7 +165,7 @@ function directory() {
   fi
 
   if [ "$ENSURE_DIRECTORY_CONFIG" = "ON" ]; then
-    sed -e '/^directory\.internal\./d' -e '/^storage\.directory/d'
+    sed -e '/^directory\.aio-rocksdb\./d' -e '/^storage\.directory/d'
     echo 'directory.aio-rocksdb.type = "aio-rocksdb"'
     echo 'directory.aio-rocksdb.store = "aio-rocksdb"'
     echo 'storage.directory = "aio-rocksdb"'

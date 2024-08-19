@@ -98,7 +98,7 @@ If you're using another domain. Please disable the automatic configuration of ce
 
 ## Options
 
-You can disable somme automatic override configuration with environment variables in the file `/opt/stalwart-mail/etc/aio-config.env`.
+You can disable some automatic override configuration with environment variables in the file `/opt/stalwart-mail/etc/aio-config.env`.
 
 | Variable                         | Description                                                                                                                               | Default | WebAdmin url                                                     |
 |----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|---------|------------------------------------------------------------------|
@@ -109,9 +109,9 @@ You can disable somme automatic override configuration with environment variable
 | `ENSURE_WEB_PORT_CONFIG`         | Force web port configuration.<br/>This port is used to access the web-admin.                                                              | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-caddy/edit`       |                                                
 | `ENSURE_MANAGESIEVE_PORT_CONFIG` | Force managesieve port configuration.<br/>This port is used to manage filters.                                                            | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-managesieve/edit` |
 | `ENSURE_STORAGE_CONFIG`          | Force storage configuration.                                                                                                              | `ON`    | `https://mail.$NC_DOMAIN/settings/store/aio-rocksdb/edit`        |
-| `ENSURE_DIRECTORY_CONFIG`        | Force directory configuration.<br/>This is the systeme to manage users.                                                                   | `ON`    | `https://mail.$NC_DOMAIN/settings/directory/aio-rocksdb/edit`    |
+| `ENSURE_DIRECTORY_CONFIG`        | Force directory configuration.<br/>This is the system to manage users.                                                                    | `ON`    | `https://mail.$NC_DOMAIN/settings/directory/aio-rocksdb/edit`    |
 | `ENSURE_FILE_LOGGING_CONFIG`     | Force file logging configuration.<br/>This provide access to logs form the web-admin.                                                     | `ON`    | `https://mail.$NC_DOMAIN/settings/tracing/aio-log/edit`          |
-| `ENSURE_CONSOLE_LOGGING_CONFIG`  | Force console logging configuration.<br/>This provide access to logs form docker and mastercontainer interface.                           | `ON`    | `https://mail.$NC_DOMAIN/settings/tracing/aio-stdout/edit`       |
+| `ENSURE_CONSOLE_LOGGING_CONFIG`  | Force console logging configuration.<br/>This provide access to logs form docker and master container interface.                          | `ON`    | `https://mail.$NC_DOMAIN/settings/tracing/aio-stdout/edit`       |
 | `ENSURE_FALLBACK_ADMIN_CONFIG`   | Force fallback admin configuration.<br/>This is the admin account to access the web-admin.                                                | `ON`    | `https://mail.$NC_DOMAIN/settings/authentication/edit`           |
 | `AUTO_CONFIG_TLS_CERT`           | Automatically configure TLS certificates from caddy community container.<br/>This is used to secure the connection for the mais protocol. | `ON`    | `https://mail.$NC_DOMAIN/settings/certificate/caddy-aio/edit`    |
 
@@ -143,14 +143,24 @@ See [Options](#options).
 
 To unlock the server use the following command:
 ```bash
+# Stop stalwart-mail container
+docker stop nextcloud-aio-stalwart
+
+# Go inside container in 0.8.0
+docker run --rm -it -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/bash stalwartlabs/mail-server:v0.8.0
+```
+
+Then, run the following command inside the container:
+
+```bash
 # verify the data version is in '0.8.0'
-docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server:v0.8.0 /opt/stalwart-mail/aio.lock
+cat /opt/stalwart-mail/aio.lock
 
 # Backup your configuration file
-docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server:v0.8.0 /opt/stalwart-mail/etc/config.toml > config.toml
+cp /opt/stalwart-mail/etc/config.toml /opt/stalwart-mail/etc/config.toml.manual-backup
 
 # Set the new data version
-docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/sed stalwartlabs/mail-server:v0.9.0 -i 's/^0.8.0$/0.9/g' /opt/stalwart-mail/aio.lock
+sed -i 's/^0.8.0$/0.9/g' /opt/stalwart-mail/aio.lock
 ```
 
 Then, go inside your AIO panel and restart and upgrade your container.
@@ -176,7 +186,7 @@ docker run --rm -it -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /b
 Then, run the following command inside the container:
 
 ```bash
-# Verify the dataversion is in '0.7.0'
+# Verify the data version is in '0.7.0'
 cat /opt/stalwart-mail/aio.lock
 
 # Export the data
@@ -202,7 +212,7 @@ Then, run the following command inside the container:
 # Import the data
 stalwart-mail --config /opt/stalwart-mail/etc/config.toml --import /opt/stalwart-mail/export
 
-# Set the new dataversion
+# Set the new data version
 sed -i 's/^0.7.0$/0.8.0/g' /opt/stalwart-mail/aio.lock
 
 # Exit the container
