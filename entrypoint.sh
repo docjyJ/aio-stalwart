@@ -182,13 +182,13 @@ function file_logging() {
 
   if [ "$ENSURE_FILE_LOGGING_CONFIG" = "ON" ]; then
     sed -e '/^tracer\.aio-log\./d'
-    echo 'tracer.aio-log.type = "log"'
-    echo 'tracer.aio-log.level = "trace"'
-    echo 'tracer.aio-log.path = "/var/log"'
-    echo 'tracer.aio-log.prefix = "stalwart.log"'
-    echo 'tracer.aio-log.rotate = "daily"'
-    echo 'tracer.aio-log.ansi = false'
-    echo 'tracer.aio-log.enable = true'
+    echo 'tracer.log.type = "log"'
+    echo 'tracer.log.level = "trace"'
+    echo 'tracer.log.path = "/var/log"'
+    echo 'tracer.log.prefix = "stalwart.log"'
+    echo 'tracer.log.rotate = "daily"'
+    echo 'tracer.log.ansi = false'
+    echo 'tracer.log.enable = true'
   else
     cat
   fi
@@ -201,11 +201,11 @@ function console_logging() {
   fi
 
   if [ "$ENSURE_CONSOLE_LOGGING_CONFIG" = "ON" ]; then
-    sed -e '/^tracer\.aio-stdout\./d'
-    echo 'tracer.aio-stdout.type = "stdout"'
-    echo 'tracer.aio-stdout.level = "trace"'
-    echo 'tracer.aio-stdout.ansi = false'
-    echo 'tracer.aio-stdout.enable = true'
+    sed -e '/^tracer\.aio-log\./d'
+    echo 'tracer.aio-log.type = "stdout"'
+    echo 'tracer.aio-log.level = "trace"'
+    echo 'tracer.aio-log.ansi = false'
+    echo 'tracer.aio-log.enable = true'
   else
     cat
   fi
