@@ -1,5 +1,5 @@
 # From https://github.com/stalwartlabs/mail-server/blob/main/Dockerfile
-FROM stalwartlabs/mail-server:v0.9.1
+FROM stalwartlabs/mail-server:v0.9.2
 
 COPY --chmod=775 entrypoint.sh /entrypoint.sh
 
