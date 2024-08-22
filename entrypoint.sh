@@ -181,7 +181,7 @@ function file_logging() {
   fi
 
   if [ "$ENSURE_FILE_LOGGING_CONFIG" = "ON" ]; then
-    sed -e '/^tracer\.aio-log\./d'
+    sed -e '/^tracer\.log\./d'
     echo 'tracer.log.type = "log"'
     echo 'tracer.log.level = "trace"'
     echo 'tracer.log.path = "/var/log"'
