@@ -24,6 +24,7 @@ if [ "$SECURE_DATA_AFTER_UPGRADE" != "OFF" ]; then
       >&2 echo 'Your data is in an old format.'
       >&2 echo 'Make a backup and see https://github.com/docjyJ/aio-stalwart#Upgrading'
       >&2 echo 'To avoid any loss of data, Stalwart will not launch.'
+      sleep 10
       exit 1
     fi
   else
