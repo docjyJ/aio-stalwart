@@ -135,11 +135,10 @@ To avoid any loss of data, Stalwart will not launch.
 
 ### Upgrading from 0.8.x to 0.9.x
 
-This migration does not require any action, but the organization of the database has changed.
-Be vigilant about possible data loss.
+This migration does not require any action, but the organization of the database and autoconfiguration script has changed.
 
-The entrypoint script changes to. Be careful if you have made on settings managed by the entrypoint script.
-See [Options](#options).
+1. Be vigilant about possible data loss, see [Stalwart 0.9.0](https://github.com/stalwartlabs/mail-server/releases/tag/v0.9.0)
+2. Be careful if you have made any settings, the autoconfiguration script might overwrite them, see [Options](#options).
 
 To unlock the server use the following command:
 ```bash
