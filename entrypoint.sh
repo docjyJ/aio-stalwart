@@ -24,6 +24,7 @@ if [ "$SECURE_DATA_AFTER_UPGRADE" != "OFF" ]; then
       >&2 echo 'Your data is in an old format.'
       >&2 echo 'Make a backup and see https://github.com/docjyJ/aio-stalwart#Upgrading'
       >&2 echo 'To avoid any loss of data, Stalwart will not launch.'
+      sleep 10
       exit 1
     fi
   else
@@ -245,8 +246,9 @@ function auto_config_cert() {
       echo "certificate.caddy-aio.cert = \"%{file:$AIO_PUB}%\""
 
       while [ ! -f "$AIO_KEY" ] || [ ! -f "$AIO_PUB" ]; do
-        >&2 echo "Waiting for cert to get created..."
-        sleep 5
+        >&2 echo "Waiting for ssl keys to get created..."
+        >&2 echo "See : https://github.com/docjyJ/aio-stalwart#use-your-own-certificate"
+        sleep 10
       done
     fi
   else
