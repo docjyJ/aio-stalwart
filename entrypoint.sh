@@ -68,7 +68,7 @@ function submission_port() {
 
   if [ "$ENSURE_SUBMISSION_PORT_CONFIG" = "ON" ]; then
     sed -e '/^server\.listener\.aio-submission/d'
-    echo 'server.listener.aio-submission.bind = "[::]:587"'
+    echo 'server.listener.aio-submission.bind = "[::]:465"'
     echo 'server.listener.aio-submission.protocol = "smtp"'
     echo 'server.listener.aio-submission.tls.implicit = true'
   else
