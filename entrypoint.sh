@@ -242,7 +242,7 @@ function auto_config_cert() {
       AIO_PUB="/caddy/caddy/certificates/acme-v02.api.letsencrypt.org-directory/mail.$NC_DOMAIN/mail.$NC_DOMAIN.crt"
 
       sed -e '/^certificate\.caddy-aio\./d'
-      echo "certificate.caddy-aio.key = \"%{file:$AIO_KEY}%\""
+      echo "certificate.caddy-aio.private-key = \"%{file:$AIO_KEY}%\""
       echo "certificate.caddy-aio.cert = \"%{file:$AIO_PUB}%\""
 
       while [ ! -f "$AIO_KEY" ] || [ ! -f "$AIO_PUB" ]; do
