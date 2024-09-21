@@ -1,125 +1,183 @@
 > [!CAUTION]
-> Do not use this feature as a main mail server, without a redundancy system and without knowledge.
- 
+> Do not use this feature as a main mail server without a redundancy system and proper knowledge.
+
 > [!WARNING]
-> Stalwart and nextcloud community containers are solutions under development.
+> Stalwart and Nextcloud community containers are solutions under development.
 >
-> Additionally, be aware that the mail server is the most difficult service to deploy.
-> 
-> I try my best to make this as simple as possible. This solution is quite stable (I use it for my cloud) but it is not enterprise quality.
-> 
-> If you have any suggestions, questions or want to report a bug, [open an issue](https://github.com/docjyj/aio-stalwart/issues)!
+> The mail server is one of the most difficult services to deploy. 
+> This solution is quite stable (used for my own cloud) but it is not enterprise quality.
+>
+> If you have any suggestions, questions, or want to report a bug, [open an issue](https://github.com/docjyj/aio-stalwart/issues)!
 
-# Stalwart community container for Nextcloud All-in-one
+# Stalwart Community Container for Nextcloud All-in-One
 
-This container is used in [Nextcloud All-in-one](https://github.com/nextcloud/all-in-one/tree/main/community-containers/stalwart) to provide a mail server.
+This container is used in [Nextcloud All-in-One](https://github.com/nextcloud/all-in-one/tree/main/community-containers/stalwart) to provide a mail server. It works with the [Caddy community container](https://github.com/nextcloud/all-in-one/tree/main/community-containers/caddy) as a reverse proxy.
 
-This container works with the [caddy community container](https://github.com/nextcloud/all-in-one/tree/main/community-containers/caddy) as reverse proxy.
+## Table of Contents
+1. [Features](#features)
+2. [Getting Started](#getting-started)
+   - [Prerequisites](#prerequisites)
+   - [Installation](#installation)
+3. [Advanced Configuration](#advanced-configuration)
+   - [Change the Admin Password](#change-the-admin-password)
+   - [Use a Custom Domain](#use-a-custom-domain)
+   - [Use Your Own Reverse Proxy](#use-your-own-reverse-proxy)
+   - [Use Your Own Certificate](#use-your-own-certificate)
+4. [Options](#options)
+5. [Manual Backup](#manual-backup)
+   - [Create Backup in 0.x.x](#create-backup-in-0xx)
+   - [Restore Backup in 0.x.x](#restore-backup-in-0xx)
+6. [Upgrading](#upgrading)
+   - [Upgrading from 0.9.x to 0.10.x](#upgrading-from-09x-to-010x)
+   - [Upgrading from 0.8.x to 0.9.x](#upgrading-from-08x-to-09x)
+   - [Upgrading from 0.7.x to 0.8.x](#upgrading-from-07x-to-08x)
+
+## Features
 
 Compared to a default Stalwart container, this container allows:
-- Automatically configures a mail server and *(In progress) tutorials for actions need to be done manually and advanced feature*.
-- Compatible with Nextcloud AIO backups.
-- *(Planned) Synchronization of Nextcloud and Stalwart accounts.*
+- Automatic configuration of a mail server.
+- Compatibility with Nextcloud AIO backups.
+- *(Planned)* Synchronization of Nextcloud and Stalwart accounts.
 
-## Getting started
+## Getting Started
 
 ### Prerequisites
 
-1. You will run this container on a server with a static IP address.
-2. Make sure than port `25`, `465`, `993`, `4190` and `10003` are not used by another programme. (Use `sudo netstat -tulpn` to list all used ports).
-3. You have deployed the [caddy community container](https://github.com/nextcloud/all-in-one/tree/main/community-containers/caddy) as reverse proxy. (Other solutions are possible, see: [Use your own reverse proxy](#use-your-own-reverse-proxy)).
+1. A server with a static IP address.
+2. Ensure that ports `25`, `465`, `993`, `4190`, and `10003` are not used by another program. (Use `sudo netstat -tulpn` to list all used ports).
+3. Deploy the [Caddy community container](https://github.com/nextcloud/all-in-one/tree/main/community-containers/caddy) as a reverse proxy. (Other solutions are possible, see: [Use Your Own Reverse Proxy](#use-your-own-reverse-proxy)).
 
 ### Installation
 
 See [how to use community containers](https://github.com/nextcloud/all-in-one/tree/main/community-containers#how-to-use-this).
 
-After installation on nextcloud go to `https://mail.$NC_DOMAIN/login` and login with the following credentials:
-- Username: `admin`
-- Password: get with the command `docker inspect nextcloud-aio-stalwart  | grep STALWART_USER_PASS`
+After installation on Nextcloud, go to `https://mail.$NC_DOMAIN/login` and log in with the following credentials:
+- **Username**: `admin`
+- **Password**: Get with the command `docker inspect nextcloud-aio-stalwart | grep STALWART_USER_PASS`
 
-Once connected, add a domain, configure your DNS zone and create your users.
+Once connected, add a domain, configure your DNS zone, and create your users.
 
-Additionally, you might want to install and configure [snappymail](https://apps.nextcloud.com/apps/snappymail) or [mail](https://apps.nextcloud.com/apps/mail) inside Nextcloud in order to use your mail accounts for sending and retrieving mails.
+Additionally, you might want to install and configure [Snappymail](https://apps.nextcloud.com/apps/snappymail) or [Mail](https://apps.nextcloud.com/apps/mail) inside Nextcloud to use your mail accounts for sending and retrieving emails.
 
-## Advanced configuration
+## Advanced Configuration
 
 > [!IMPORTANT]
-> This image overrides the configuration of the Stalwart on every start.
-> 
+> This image overrides the configuration of Stalwart on every start.
 > This prevents you from making changes that break links with Nextcloud and the Caddy Community Container.
 
-See the [Stalwart FAQ](https://stalw.art/docs/faq) to see all possibilities.
+See the [Stalwart FAQ](https://stalw.art/docs/faq) for all possibilities.
 
-For any question [open an issue](https://github.com/docjyj/aio-stalwart/issues)!
+For any questions, [open an issue](https://github.com/docjyj/aio-stalwart/issues)!
 
-### Change the admin password
+### Change the Admin Password
 
-Before changing the password, make sure to disable the automatic configuration of the fallback admin. See [Options](#options).
+Before changing the password, disable the automatic configuration of the fallback admin. See [Options](#options).
 
 Then you can remove or change the password in the web-admin.
 
+### Use a Custom Domain
 
-### Use a custom domain
+You can use a custom domain for the mail server. To configure it follow this step:
 
-You can use a custom domain for the mail server.
+1. Disable the automatic configuration of certificates. See [Options](#options).
+2. Configure your own reverse proxy. See [Use Your Own Reverse Proxy](#use-your-own-reverse-proxy).
+3. Add your own certificate. See [Stalwart Certificate](https://stalw.art/docs/server/tls/certificates).
 
-1. To do this, you need to disable the automatic configuration of certificates. See [Options](#options).
-2. Then, configure your own reverse proxy. See [Use your own reverse proxy](#use-your-own-reverse-proxy).
-3. Finally, add your own certificate. See [Stalwart Certificate](https://stalw.art/docs/server/tls/certificates).
+### Use Your Own Reverse Proxy
 
+Redirect HTTP (or HTTPS) traffic from `mail.$NC_DOMAIN` to port `10003` of the `nextcloud-aio-stalwart` container in HTTP.
 
-### Use your own reverse proxy
-
-You need to redirect http (or https) traffic from `mail.$NC_DOMAIN` to port `10003` of the `nextcloud-aio-stalwart` container in `http`.
-
-**Then add your own certificate.** See : [Use your own certificate](#use-your-own-certificate)
+**Then add your own certificate.** See: [Use Your Own Certificate](#use-your-own-certificate)
 
 Example with `Caddyfile` syntax:
 ```caddyfile
 https://mail.{$NC_DOMAIN}:443 {
-    reverse_proxy http://{$STALWAER_HOSTNAME}:10003
+    reverse_proxy http://{$STALWART_HOSTNAME}:10003
 }
 ```
 
-### Use your own certificate
+### Use Your Own Certificate
 
-Please add a certificate in volume `nextcloud_aio_caddy` in this path:
+Add a certificate in volume `nextcloud_aio_caddy` in this path:
 - `$VOLUME_ROOT/caddy/certificates/acme-v02.api.letsencrypt.org-directory/mail.$NC_DOMAIN/mail.$NC_DOMAIN.key`
 - `$VOLUME_ROOT/caddy/certificates/acme-v02.api.letsencrypt.org-directory/mail.$NC_DOMAIN/mail.$NC_DOMAIN.crt`
 
-If you're using caddy, you can mount the volume `nextcloud_aio_caddy` your caddy container and add this [storage global directive](https://caddyserver.com/docs/caddyfile/options#storage):
+If you're using Caddy, mount the volume `nextcloud_aio_caddy` to your Caddy container and add this [storage global directive](https://caddyserver.com/docs/caddyfile/options#storage):
 ```caddyfile
 {
     storage file_system {$VOLUME_ROOT}/caddy
 }
 ```
 
-If you're using another domain. Please disable the automatic configuration of certificates. See [Options](#options) and [Stalwart Certificate](https://stalw.art/docs/server/tls/certificates).
+If you're using another domain, disable the automatic configuration of certificates. See [Options](#options) and [Stalwart Certificate](https://stalw.art/docs/server/tls/certificates).
 
 ## Options
 
-You can disable some automatic override configuration with environment variables in the file `/opt/stalwart-mail/etc/aio-config.env`.
+Disable some automatic override configurations with environment variables in the file `/opt/stalwart-mail/etc/aio-config.env`.
 
-| Variable                         | Description                                                                                                                               | Default | WebAdmin url                                                     |
-|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|---------|------------------------------------------------------------------|
-| `SECURE_DATA_AFTER_UPGRADE`      | Prevent the server from starting if the data is in an old format.                                                                         | `ON`    |                                                                  |
-| `ENSURE_MAIL_PORT_CONFIG`        | Force mail exchange port configuration.<br/>This port is used to receive emails.                                                          | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-mail/edit`        |
-| `ENSURE_SUBMISSION_PORT_CONFIG`  | Force mail submission port configuration.<br/>This port is used to send emails.                                                           | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-submission/edit`  |
-| `ENSURE_IMAP_PORT_CONFIG`        | Force IMAP port configuration.<br/>This port is used to read emails.                                                                      | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-imap/edit`        |
-| `ENSURE_WEB_PORT_CONFIG`         | Force web port configuration.<br/>This port is used to access the web-admin.                                                              | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-caddy/edit`       |                                                
-| `ENSURE_MANAGESIEVE_PORT_CONFIG` | Force managesieve port configuration.<br/>This port is used to manage filters.                                                            | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-managesieve/edit` |
-| `ENSURE_STORAGE_CONFIG`          | Force storage configuration.                                                                                                              | `ON`    | `https://mail.$NC_DOMAIN/settings/store/aio-rocksdb/edit`        |
-| `ENSURE_DIRECTORY_CONFIG`        | Force directory configuration.<br/>This is the system to manage users.                                                                    | `ON`    | `https://mail.$NC_DOMAIN/settings/directory/aio-rocksdb/edit`    |
-| `ENSURE_FILE_LOGGING_CONFIG`     | Force file logging configuration.<br/>This provide access to logs form the web-admin.                                                     | `ON`    | `https://mail.$NC_DOMAIN/settings/tracing/aio-log/edit`          |
-| `ENSURE_CONSOLE_LOGGING_CONFIG`  | Force console logging configuration.<br/>This provide access to logs form docker and master container interface.                          | `ON`    | `https://mail.$NC_DOMAIN/settings/tracing/aio-stdout/edit`       |
-| `ENSURE_FALLBACK_ADMIN_CONFIG`   | Force fallback admin configuration.<br/>This is the admin account to access the web-admin.                                                | `ON`    | `https://mail.$NC_DOMAIN/settings/authentication/edit`           |
-| `AUTO_CONFIG_TLS_CERT`           | Automatically configure TLS certificates from caddy community container.<br/>This is used to secure the connection for the mais protocol. | `ON`    | `https://mail.$NC_DOMAIN/settings/certificate/caddy-aio/edit`    |
+| Variable                         | Description                                                                                                                                   | Default | WebAdmin URL                                                     |
+|----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|---------|------------------------------------------------------------------|
+| `SECURE_DATA_AFTER_UPGRADE`      | Prevent the server from starting if the data is in an old format.                                                                             | `ON`    |                                                                  |
+| `ENSURE_MAIL_PORT_CONFIG`        | Force mail exchange port configuration.<br/>This port is used to receive emails.                                                              | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-mail/edit`        |
+| `ENSURE_SUBMISSION_PORT_CONFIG`  | Force mail submission port configuration.<br/>This port is used to send emails.                                                               | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-submission/edit`  |
+| `ENSURE_IMAP_PORT_CONFIG`        | Force IMAP port configuration.<br/>This port is used to read emails.                                                                          | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-imap/edit`        |
+| `ENSURE_WEB_PORT_CONFIG`         | Force web port configuration.<br/>This port is used to access the web-admin.                                                                  | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-caddy/edit`       |
+| `ENSURE_MANAGESIEVE_PORT_CONFIG` | Force managesieve port configuration.<br/>This port is used to manage filters.                                                                | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-managesieve/edit` |
+| `ENSURE_STORAGE_CONFIG`          | Force storage configuration.                                                                                                                  | `ON`    | `https://mail.$NC_DOMAIN/settings/store/aio-rocksdb/edit`        |
+| `ENSURE_DIRECTORY_CONFIG`        | Force directory configuration.<br/>This is the system to manage users.                                                                        | `ON`    | `https://mail.$NC_DOMAIN/settings/directory/aio-rocksdb/edit`    |
+| `ENSURE_FILE_LOGGING_CONFIG`     | Force file logging configuration.<br/>This provides access to logs from the web-admin.                                                        | `ON`    | `https://mail.$NC_DOMAIN/settings/tracing/aio-log/edit`          |
+| `ENSURE_CONSOLE_LOGGING_CONFIG`  | Force console logging configuration.<br/>This provides access to logs from Docker and the master container interface.                         | `ON`    | `https://mail.$NC_DOMAIN/settings/tracing/aio-stdout/edit`       |
+| `ENSURE_FALLBACK_ADMIN_CONFIG`   | Force fallback admin configuration.<br/>This is the admin account to access the web-admin.                                                    | `ON`    | `https://mail.$NC_DOMAIN/settings/authentication/edit`           |
+| `AUTO_CONFIG_TLS_CERT`           | Automatically configure TLS certificates from the Caddy community container.<br/>This is used to secure the connection for the mail protocol. | `ON`    | `https://mail.$NC_DOMAIN/settings/certificate/caddy-aio/edit`    |
+
+## Manual Backup
+
+### Create Backup in 0.x.x
+
+First, stop the stalwart-mail container and then enter the container by replacing `0.x.x` with the version you are using.
+
+```bash
+# Stop stalwart-mail container
+docker stop nextcloud-aio-stalwart
+
+# Go inside container in 0.x.x
+docker run --rm -it -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/bash stalwartlabs/mail-server:v0.x.x
+```
+
+Then, run the following command inside the container:
+
+```bash
+# If export folder exists, remove it
+rm -r /opt/stalwart-mail/export
+
+# Export the data
+stalwart-mail --config /opt/stalwart-mail/etc/config.toml --export /opt/stalwart-mail/export
+
+# Exit the container
+exit
+```
+Now your backup is done.
+
+### Restore Backup in 0.x.x
+
+Stop the stalwart-mail container and then import your backup by replacing `0.x.x` with the version you are using.
+
+```bash
+# Stop stalwart-mail container
+docker stop nextcloud-aio-stalwart
+
+# Import your data in 0.x.x
+docker run --rm -it -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/stalwart-mail stalwartlabs/mail-server:v0.x.x --config /opt/stalwart-mail/etc/config.toml --import /opt/stalwart-mail/export
+```
+
+You have now restored your backup.
 
 ## Upgrading
+
 > [!NOTE]
 > Unless the starting script tells you, you have no action to do to update.
 
-See https://github.com/stalwartlabs/mail-server/blob/main/UPGRADING.md
+See [Stalwart Upgrading Guide](https://github.com/stalwartlabs/mail-server/blob/main/UPGRADING.md).
 
 During a major server update, this message will be displayed:
 
@@ -130,8 +188,18 @@ To avoid any loss of data, Stalwart will not launch.
 ```
 
 > [!CAUTION]
-> Before each update don't forget to make a backup.
+> Before each update, don't forget to make a backup.
 
+### Upgrading from 0.9.x to 0.10.x
+
+To upgrade from 0.9.x to 0.10.x, run the following command:
+
+1. Stop the stalwart-mail container: `docker stop nextcloud-aio-stalwart`
+2. Check the data version is in `0.9`: `docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server:v0.9.4 /opt/stalwart-mail/aio.lock`
+3. *Now you can do a backup in AIO interface or manually in version 0.9.4 (see [Create Backup in 0.x.x](#create-backup-in-0xx)) if you haven't done it yet.*
+4. Finally, enable the new data version by running the following command: `docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/sed stalwartlabs/mail-server:v0.10.0 -i 's/^0.9$/0.10/g' /opt/stalwart-mail/aio.lock`
+
+Then, go inside your AIO panel and restart your container.
 
 ### Upgrading from 0.8.x to 0.9.x
 
@@ -140,82 +208,30 @@ This migration does not require any action, but the organization of the database
 1. Be vigilant about possible data loss, see [Stalwart 0.9.0](https://github.com/stalwartlabs/mail-server/releases/tag/v0.9.0)
 2. Be careful if you have made any settings, the autoconfiguration script might overwrite them, see [Options](#options).
 
-To unlock the server use the following command:
-```bash
-# Stop stalwart-mail container
-docker stop nextcloud-aio-stalwart
+To upgrade from 0.8.x to 0.9.x, run the following steps:
 
-# Go inside container in 0.8.0
-docker run --rm -it -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/bash stalwartlabs/mail-server:v0.8.0
-```
+1. Stop the stalwart-mail container: `docker stop nextcloud-aio-stalwart`
+2. Check the data version is in `0.8.0`: `docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server:v0.8.0 /opt/stalwart-mail/aio.lock`
+3. **Backup your configuration file** by copying out of this command: `docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server /opt/stalwart-mail/etc/config.toml`
+4. *Now you can do a backup in AIO interface or manually in version 0.8.5 (see [Create Backup in 0.x.x](#create-backup-in-0xx)) if you haven't done it yet.*
+5. Finally, enable the new data version by running the following command: `docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/sed stalwartlabs/mail-server:v0.9.0 -i 's/^0.8.0$/0.9/g' /opt/stalwart-mail/aio.lock`
 
-Then, run the following command inside the container:
-
-```bash
-# verify the data version is in '0.8.0'
-cat /opt/stalwart-mail/aio.lock
-
-# Backup your configuration file
-cp /opt/stalwart-mail/etc/config.toml /opt/stalwart-mail/etc/config.toml.manual-backup
-
-# Set the new data version
-sed -i 's/^0.8.0$/0.9/g' /opt/stalwart-mail/aio.lock
-```
-
-Then, go inside your AIO panel and restart and upgrade your container.
+Then, go inside your AIO panel and restart your container.
 
 You can verify your config file with the following command after starting the container:
 ```bash
 docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server:v0.9.0 /opt/stalwart-mail/etc/config.toml
 ```
 
-
 ### Upgrading from 0.7.x to 0.8.x
 
-To upgrade from 0.7.x to 0.8.x, you need to run the following command:
+To upgrade from 0.7.x to 0.8.x, run the following steps:
 
-```bash
-# Stop stalwart-mail container
-docker stop nextcloud-aio-stalwart
-
-# Go inside container in 0.7.3
-docker run --rm -it -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/bash stalwartlabs/mail-server:v0.7.3
-```
-    
-Then, run the following command inside the container:
-
-```bash
-# Verify the data version is in '0.7.0'
-cat /opt/stalwart-mail/aio.lock
-
-# Export the data
-stalwart-mail --config /opt/stalwart-mail/etc/config.toml --export /opt/stalwart-mail/export
-
-# Exit the container
-exit
-```
-
-Finally, run the following command to upgrade to 0.8.x:
-
-```bash
-# Go inside container in 0.8.0
-docker run --rm -it -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/bash stalwartlabs/mail-server:v0.8.0
-```
-
-> [!NOTE]
-> You can do a backup in the AIO panel before continuing.
-
-Then, run the following command inside the container:
-
-```bash
-# Import the data
-stalwart-mail --config /opt/stalwart-mail/etc/config.toml --import /opt/stalwart-mail/export
-
-# Set the new data version
-sed -i 's/^0.7.0$/0.8.0/g' /opt/stalwart-mail/aio.lock
-
-# Exit the container
-exit
-```
+1. Stop the stalwart-mail container: `docker stop nextcloud-aio-stalwart`
+2. Check the data version is in `0.7.0`: `docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server:v0.7.3 /opt/stalwart-mail/aio.lock`
+3. **You must export your data before upgrading.** Use stalwart version `0.7.3` and follow steps [Create Backup in 0.x.x](#create-backup-in-0xx).
+4. *Now you can do a backup in AIO interface if you haven't done it yet.*
+5. After exporting, import your data by using stalwart version `0.8.0` and follow steps [Restore Backup in 0.x.x](#restore-backup-in-0xx).
+6. Finally, enable the new data version by running the following command: `docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/sed stalwartlabs/mail-server:v0.8.0 -i 's/^0.7.0$/0.8.0/g' /opt/stalwart-mail/aio.lock`
 
 Now go inside your AIO panel and restart and upgrade your container.

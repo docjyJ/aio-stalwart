@@ -11,7 +11,7 @@ fi
 STW_CONFIG_FILE="/opt/stalwart-mail/etc/config.toml"
 STW_AIO_ENV="/opt/stalwart-mail/etc/aio-config.env"
 AIO_LOCK="/opt/stalwart-mail/aio.lock"
-DATA_VERSION="0.9"
+DATA_VERSION="0.10"
 
 if [ -z "$SECURE_DATA_AFTER_UPGRADE" ]; then
   echo 'SECURE_DATA_AFTER_UPGRADE="ON"' >> "$STW_AIO_ENV"
