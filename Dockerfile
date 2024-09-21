@@ -4,7 +4,7 @@ FROM stalwartlabs/mail-server:v0.9.4
 COPY --chmod=775 entrypoint.sh /entrypoint.sh
 COPY --chmod=775 healthcheck.sh /healthcheck.sh
 
-RUN apt-get install -y curl
+RUN apt-get install  --no-install-recommends -y curl=7.88.1-10+deb12u7
 
 EXPOSE 10003
 
