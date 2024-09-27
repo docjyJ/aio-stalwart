@@ -1,5 +1,5 @@
 # From https://github.com/stalwartlabs/mail-server/blob/main/Dockerfile
-FROM stalwartlabs/mail-server:v0.10.0
+FROM stalwartlabs/mail-server:v0.10.1
 
 COPY --chmod=775 entrypoint.sh /entrypoint.sh
 COPY --chmod=775 healthcheck.sh /healthcheck.sh
