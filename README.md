@@ -13,25 +13,6 @@
 
 This container is used in [Nextcloud All-In-One](https://github.com/nextcloud/all-in-one/tree/main/community-containers/stalwart) to provide a mail server. It works with the [Caddy community container](https://github.com/nextcloud/all-in-one/tree/main/community-containers/caddy) as a reverse proxy.
 
-## Table of Contents
-1. [Features](#features)
-2. [Getting Started](#getting-started)
-   - [Prerequisites](#prerequisites)
-   - [Installation](#installation)
-3. [Advanced Configuration](#advanced-configuration)
-   - [Change the Admin Password](#change-the-admin-password)
-   - [Use a Custom Domain](#use-a-custom-domain)
-   - [Use Your Own Reverse Proxy](#use-your-own-reverse-proxy)
-   - [Use Your Own Certificate](#use-your-own-certificate)
-4. [Managed Settings](#managed-settings)
-5. [Manual Backup](#manual-backup)
-   - [Create Backup in 0.x.x](#create-backup-in-0xx)
-   - [Restore Backup in 0.x.x](#restore-backup-in-0xx)
-6. [Upgrading](#upgrading)
-   - [Upgrading from 0.9.x to 0.10.x](#upgrading-from-09x-to-010x)
-   - [Upgrading from 0.8.x to 0.9.x](#upgrading-from-08x-to-09x)
-   - [Upgrading from 0.7.x to 0.8.x](#upgrading-from-07x-to-08x)
-
 ## Features
 
 Compared to a default Stalwart container, this container allows:
@@ -58,6 +39,49 @@ After installation on Nextcloud, go to `https://mail.$NC_DOMAIN/login` and log i
 Once connected, add a domain, configure your DNS zone, and create your users.
 
 Additionally, you might want to install and configure [Snappymail](https://apps.nextcloud.com/apps/snappymail) or [Mail](https://apps.nextcloud.com/apps/mail) inside Nextcloud to use your mail accounts for sending and retrieving emails.
+
+### Export Data To Another Instance
+
+If you want to change Stalwart server, you can export your data by following command:
+
+```shell
+# Stop stalwart-mail container
+docker stop nextcloud-aio-stalwart
+
+# Export the data
+docker run --rm -it -v nextcloud_aio_stalwart:/opt/stalwart-mail -v "$LOCATION:/export" --entrypoint /bin/stalwart-mail nextcloud_aio_stalwart --config /opt/stalwart-mail/etc/config.toml --export /export
+```
+
+Now your data is in the `$LOCATION` folder
+
+### Import From Exported Data
+
+To import your data to a new Stalwart server for the folder `$LOCATION`, use the following command with:
+
+```shell
+# Stop stalwart-mail container
+docker stop nextcloud-aio-stalwart
+
+# Import the data
+docker run --rm -it -v nextcloud_aio_stalwart:/opt/stalwart-mail -v "$LOCATION:/import" --entrypoint /bin/stalwart-mail nextcloud_aio_stalwart --config /opt/stalwart-mail/etc/config.toml --import /import
+```
+
+Now your data is imported, go inside your All-In-One panel and restart your container.
+
+## Common Issues
+
+### WebAdmin Show Errors
+
+Try to update the container in the Nextcloud All-In-One panel.
+
+If it doesn't resolve the issue, upgrade manually the WebAdmin with the following command:
+
+```shell
+docker exec -it nextcloud-aio-stalwart bash /webadmin.sh
+
+# Or if you change the fallback admin password
+docker exec -it nextcloud-aio-stalwart curl -k -u "$USER:$PASSWORD" http://127.0.0.1:10003/api/update/webadmin
+```
 
 ## Advanced Configuration
 
@@ -131,48 +155,6 @@ Disable some automatic override configurations with environment variables in the
 | `ENSURE_FALLBACK_ADMIN_CONFIG`   | Manage fallback admin configuration.<br/>This is the admin account to access the WebAdmin.                                                    | `ON`    | `https://mail.$NC_DOMAIN/settings/authentication/edit`           |
 | `AUTO_CONFIG_TLS_CERT`           | Manage configuration of TLS certificates from the Caddy community container.<br/>This is used to secure the connection for the mail protocol. | `ON`    | `https://mail.$NC_DOMAIN/settings/certificate/caddy-aio/edit`    |
 
-## Manual Backup
-
-### Create Backup in 0.x.x
-
-First, stop the stalwart-mail container and then enter the container by replacing `0.x.x` with the version you are using.
-
-```bash
-# Stop stalwart-mail container
-docker stop nextcloud-aio-stalwart
-
-# Go inside container in 0.x.x
-docker run --rm -it -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/bash stalwartlabs/mail-server:v0.x.x
-```
-
-Then, run the following command inside the container:
-
-```bash
-# If export folder exists, remove it
-rm -r /opt/stalwart-mail/export
-
-# Export the data
-stalwart-mail --config /opt/stalwart-mail/etc/config.toml --export /opt/stalwart-mail/export
-
-# Exit the container
-exit
-```
-Now your backup is done.
-
-### Restore Backup in 0.x.x
-
-Stop the stalwart-mail container and then import your backup by replacing `0.x.x` with the version you are using.
-
-```bash
-# Stop stalwart-mail container
-docker stop nextcloud-aio-stalwart
-
-# Import your data in 0.x.x
-docker run --rm -it -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/stalwart-mail stalwartlabs/mail-server:v0.x.x --config /opt/stalwart-mail/etc/config.toml --import /opt/stalwart-mail/export
-```
-
-You have now restored your backup.
-
 ## Upgrading
 
 > [!NOTE]
@@ -191,21 +173,20 @@ To avoid any loss of data, Stalwart will not launch.
 > [!CAUTION]
 > Before each update, don't forget to make a backup.
 
-
-### Issue with Upgrade from 0.10.x to 0.10.x
-
-Some changes break WebAdmin access. If you have an issue, you try to update the WebAdmin with the following command: `docker exec -it nextcloud-aio-stalwart bash /WebAdmin.sh`
-
-If you change the fallback admin password use this command: `docker exec -it nextcloud-aio-stalwart curl -k -u 'USER:PASSWORD' http://127.0.0.1:10003/api/update/webadmin`
-
 ### Upgrading from 0.9.x to 0.10.x
 
 To upgrade from 0.9.x to 0.10.x, run the following command:
 
-1. Stop the stalwart-mail container: `docker stop nextcloud-aio-stalwart`
-2. Check the data version is in `0.9`: `docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server:v0.9.4 /opt/stalwart-mail/aio.lock`
-3. *Now you can do a backup in All-In-One interface or manually in version 0.9.4 (see [Create Backup in 0.x.x](#create-backup-in-0xx)) if you haven't done it yet.*
-4. Finally, enable the new data version by running the following command: `docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/sed stalwartlabs/mail-server:v0.10.0 -i 's/^0.9$/0.10/g' /opt/stalwart-mail/aio.lock`
+```shell
+# Stop stalwart-mail container
+docker stop nextcloud-aio-stalwart
+
+# Check the data version is in 0.9 (output should be '0.9')
+docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server:v0.9.4 /opt/stalwart-mail/aio.lock
+
+# Enable the new data version
+docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/sed stalwartlabs/mail-server:v0.10.0 -i 's/^0.9$/0.10/g' /opt/stalwart-mail/aio.lock
+```
 
 Then, go inside your All-In-One panel and restart your container.
 
@@ -218,16 +199,24 @@ This migration does not require any action, but the organization of the database
 
 To upgrade from 0.8.x to 0.9.x, run the following steps:
 
-1. Stop the stalwart-mail container: `docker stop nextcloud-aio-stalwart`
-2. Check the data version is in `0.8.0`: `docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server:v0.8.0 /opt/stalwart-mail/aio.lock`
-3. **Backup your configuration file** by copying out of this command: `docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server /opt/stalwart-mail/etc/config.toml`
-4. *Now you can do a backup in All-In-One interface or manually in version 0.8.5 (see [Create Backup in 0.x.x](#create-backup-in-0xx)) if you haven't done it yet.*
-5. Finally, enable the new data version by running the following command: `docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/sed stalwartlabs/mail-server:v0.9.0 -i 's/^0.8.0$/0.9/g' /opt/stalwart-mail/aio.lock`
+```shell
+# Stop stalwart-mail container
+docker stop nextcloud-aio-stalwart
+
+# Check the data version is in 0.8.0 (output should be '0.8.0')
+docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server:v0.8.0 /opt/stalwart-mail/aio.lock
+
+# BACKUP YOUR CONFIGURATION FILE
+docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server:v0.9.0 /opt/stalwart-mail/etc/config.toml
+
+# Enable the new data version
+docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/sed stalwartlabs/mail-server:v0.9.0 -i 's/^0.8.0$/0.9/g' /opt/stalwart-mail/aio.lock
+```
 
 Then, go inside your All-In-One panel and restart your container.
 
 You can verify your config file with the following command after starting the container:
-```bash
+```shell
 docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server:v0.9.0 /opt/stalwart-mail/etc/config.toml
 ```
 
@@ -235,11 +224,21 @@ docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/c
 
 To upgrade from 0.7.x to 0.8.x, run the following steps:
 
-1. Stop the stalwart-mail container: `docker stop nextcloud-aio-stalwart`
-2. Check the data version is in `0.7.0`: `docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server:v0.7.3 /opt/stalwart-mail/aio.lock`
-3. **You must export your data before upgrading.** Use stalwart version `0.7.3` and follow steps [Create Backup in 0.x.x](#create-backup-in-0xx).
-4. *Now you can do a backup in All-In-One interface if you haven't done it yet.*
-5. After exporting, import your data by using stalwart version `0.8.0` and follow steps [Restore Backup in 0.x.x](#restore-backup-in-0xx).
-6. Finally, enable the new data version by running the following command: `docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/sed stalwartlabs/mail-server:v0.8.0 -i 's/^0.7.0$/0.8.0/g' /opt/stalwart-mail/aio.lock`
+```shell
+# Stop stalwart-mail container
+docker stop nextcloud-aio-stalwart
 
-Now go inside your All-In-One panel and restart and upgrade your container.
+# Check the data version is in 0.7.0 (output should be '0.7.0')
+docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/cat stalwartlabs/mail-server:v0.7.3 /opt/stalwart-mail/aio.lock
+
+# Export your data
+docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/stalwart-mail stalwartlabs/mail-server:v0.7.3 --config /opt/stalwart-mail/etc/config.toml --export /opt/stalwart-mail/export_7_to_8
+
+# Import your data
+docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/stalwart-mail stalwartlabs/mail-server:v0.8.0 --config /opt/stalwart-mail/etc/config.toml --import /opt/stalwart-mail/export_7_to_8
+
+# Enable the new data version
+docker run --rm -v nextcloud_aio_stalwart:/opt/stalwart-mail --entrypoint /bin/sed stalwartlabs/mail-server:v0.8.0 -i 's/^0.7.0$/0.8.0/g' /opt/stalwart-mail/aio.lock
+```
+
+Now go inside your All-In-One panel and restart and upgrade yours containers.
