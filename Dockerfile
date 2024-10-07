@@ -3,6 +3,7 @@ FROM stalwartlabs/mail-server:v0.10.2
 
 COPY --chmod=775 entrypoint.sh /entrypoint.sh
 COPY --chmod=775 healthcheck.sh /healthcheck.sh
+COPY --chmod=775 webadmin.sh /webadmin.sh
 
 RUN apt-get install  --no-install-recommends -y curl=7.88.1-10+deb12u7
 
