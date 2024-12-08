@@ -4,11 +4,13 @@ on:
   pull_request:
     paths:
       - '**.sh'
+      - '/bin/*'
   push:
     branches:
       - main
     paths:
       - '**.sh'
+      - '/bin/*'
 
 jobs:
   shellcheck:
