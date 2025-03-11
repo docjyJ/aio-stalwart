@@ -1,0 +1,14 @@
+on:
+  schedule:
+    - cron: 0 0 * * 1
+  pull-request:
+name: Markdown Link Check
+jobs:
+  markdown-link-check:
+    name: Markdown Link Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Markdown Link Check
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
