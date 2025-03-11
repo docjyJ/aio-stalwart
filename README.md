@@ -34,7 +34,7 @@ See [how to use community containers](https://github.com/nextcloud/all-in-one/tr
 
 After installation on Nextcloud, go to `https://mail.$NC_DOMAIN/login` and log in with the following credentials:
 - **Username**: `admin`
-- **Password**: Get with the command `docker inspect nextcloud-aio-stalwart | grep STALWART_USER_PASS`
+- **Password**: Get password inside the AIO interface
 
 Once connected, add a domain, configure your DNS zone, and create your users.
 
@@ -135,6 +135,9 @@ If you're using Caddy, mount the volume `nextcloud_aio_caddy` to your Caddy cont
 ```
 
 **If you're using another domain**, disable the managed configuration of certificates. See [Managed Settings](#managed-settings) and [Stalwart Certificate](https://stalw.art/docs/server/tls/certificates).
+
+> [!HINT]
+> If you disable the managed configuration of certificates, consider to use the official [Stalwart Container](https://stalw.art/docs/install/docker).
 
 ## Managed Settings
 
