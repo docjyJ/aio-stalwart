@@ -1,8 +1,8 @@
+name: Markdown Link Check
 on:
+  pull-request:
   schedule:
     - cron: 0 0 * * 1
-  pull-request:
-name: Markdown Link Check
 jobs:
   markdown-link-check:
     name: Markdown Link Check
