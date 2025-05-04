@@ -1,5 +1,5 @@
 # From https://github.com/stalwartlabs/mail-server/blob/main/Dockerfile
-FROM stalwartlabs/mail-server:v0.11.7
+FROM stalwartlabs/mail-server:v0.11.8
 
 COPY --chmod=775 bin/* /usr/local/bin/
 
