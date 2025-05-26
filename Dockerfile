@@ -9,4 +9,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
   CMD bash /usr/local/bin/healthcheck
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint" ]
-CMD ["/usr/local/bin/stalwart-mail", "--config", "/opt/stalwart-mail/etc/config.toml"]
+CMD ["/usr/local/bin/stalwart", "--config", "/opt/stalwart-mail/etc/config.toml"]
