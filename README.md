@@ -163,7 +163,7 @@ Disable some automatic override configurations with environment variables in the
 > [!NOTE]
 > Unless the starting script tells you, you have no action to do to update.
 
-See [Stalwart Upgrading Guide](https://github.com/stalwartlabs/mail-server/blob/main/UPGRADING.md).
+See [Stalwart Upgrading Guide](https://github.com/stalwartlabs/stalwart/blob/main/UPGRADING.md).
 
 During a major server update, this message will be displayed:
 
@@ -197,7 +197,7 @@ Then, go inside your All-In-One panel and restart your container.
 
 This migration does not require any action, but the organization of the database and autoconfiguration script has changed.
 
-1. Be vigilant about possible the data loss, see [Stalwart 0.9.0](https://github.com/stalwartlabs/mail-server/releases/tag/v0.9.0)
+1. Be vigilant about possible the data loss, see [Stalwart 0.9.0](https://github.com/stalwartlabs/stalwart/releases/tag/v0.9.0)
 2. Be careful if you have made any settings, the autoconfiguration script might overwrite them, see [Managed Settings](#managed-settings).
 
 To upgrade from 0.8.x to 0.9.x, run the following steps:
