@@ -137,7 +137,7 @@ If you're using Caddy, mount the volume `nextcloud_aio_caddy` to your Caddy cont
 **If you're using another domain**, disable the managed configuration of certificates. See [Managed Settings](#managed-settings) and [Stalwart Certificate](https://stalw.art/docs/server/tls/certificates).
 
 > [!HINT]
-> If you disable the managed configuration of certificates, consider to use the official [Stalwart Container](https://stalw.art/docs/install/docker).
+> If you disable the managed configuration of certificates, consider to use the official [Stalwart Container](https://stalw.art/docs/install/platform/docker/).
 
 ## Managed Settings
 
