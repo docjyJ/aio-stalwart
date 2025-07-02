@@ -10,3 +10,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint" ]
 CMD ["/usr/local/bin/stalwart", "--config", "/opt/stalwart-mail/etc/config.toml"]
+
+# Needed for Nextcloud AIO so that image cleanup can work. 
+# Unfortunately, this needs to be set in the Dockerfile in order to work.
+LABEL org.label-schema.vendor="Nextcloud"
