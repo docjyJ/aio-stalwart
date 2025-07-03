@@ -2,36 +2,40 @@ name: Docker Lint
 
 on:
   pull_request:
+    paths:
+      - ./Dockerfile
   push:
     branches:
       - main
-
-permissions:
-  contents: read
+    paths:
+      - ./Dockerfile
+  schedule:
+    - cron: '0 0 * * 0'
 
 jobs:
-  docker-lint:
+  hadolint:
+    name: Run hadolint scanning
     runs-on: ubuntu-latest
 
-    name: docker-lint
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install hadolint
-        run: |
-          sudo wget https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64 -O /usr/bin/hadolint
-          sudo chmod +x /usr/bin/hadolint
+      - name: Run hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: ./Dockerfile
+          format: sarif
+          output-file: hadolint-results.sarif
+          no-fail: true
 
-      - name: run lint
-        run: |
-          DOCKERFILES="$(find ./ -name Dockerfile)"
-          mapfile -t DOCKERFILES <<< "$DOCKERFILES"
-          for file in "${DOCKERFILES[@]}"; do
-            # DL4006 warning: Set the SHELL option -o pipefail before RUN with a pipe in it. If you are using /bin/sh in an alpine image or if your shell is symlinked to busybox then consider explicitly setting your SHELL to /bin/ash, or disable this check
-            hadolint "$file" --ignore DL4006 | tee -a ./hadolint.log
-          done
-          if grep -q "DL[0-9]\+\|SC[0-9]\+" ./hadolint.log; then
-            exit 1
-          fi
+      - name: Upload analysis results to GitHub
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: hadolint-results.sarif
+          wait-for-processing: true
