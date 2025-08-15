@@ -227,6 +227,24 @@ function fallback_admin() {
   fi
 }
 
+function aio_clamav () {
+  if [ -z "$ENSURE_AIO_CLAMAV_CONFIG" ]; then
+    echo 'ENSURE_AIO_CLAMAV_CONFIG="OFF"' >> "$STW_AIO_ENV"
+    ENSURE_AIO_CLAMAV_CONFIG="OFF"
+  fi
+
+  if [ "$ENSURE_AIO_CLAMAV_CONFIG" = "ON" ]; then
+    sed -e '/^session\.milter\.aio-clamav\./d'
+    echo "session.milter.aio-clamav.enable = [ { if = \"listener = 'smtp'\", then = true }, { else = false } ]"
+    echo 'session.milter.aio-clamav.hostname = "nextcloud-aio-clamav"'
+    echo 'session.milter.aio-clamav.port = 3310'
+    echo 'session.milter.aio-clamav.tls = false'
+    echo 'session.milter.aio-clamav.allow-invalid-certs = false'
+  else
+    cat
+  fi
+}
+
 function auto_config_cert() {
   if [ -z "$AUTO_CONFIG_TLS_CERT" ]; then
     echo 'AUTO_CONFIG_TLS_CERT="ON"' >> "$STW_AIO_ENV"
