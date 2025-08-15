@@ -100,11 +100,20 @@ Before changing the password, disable the managed credential of fallback admin. 
 
 Then you can change the password in the WebAdmin.
 
+### Enable AIO ClamAV
+
+Before configure ClamAV, you need to enable the ClamAV inside the All-In-One panel.
+
+Then, enable the autoconfiguration of ClamAV (`ENSURE_AIO_CLAMAV_CONFIG`). See [Managed Settings](#managed-settings).
+
+
+
+
 ### Use a Custom Domain
 
 To configure a custom domain for the mail server, follow these steps:
 
-1. Disable the managed configuration of certificates. See [Managed Settings](#managed-settings).
+1. Disable the managed configuration of certificates (`AUTO_CONFIG_TLS_CERT`). See [Managed Settings](#managed-settings).
 2. Configure your own reverse proxy. See [Use Your Own Reverse Proxy](#use-your-own-reverse-proxy).
 3. Add your own certificate. See [Stalwart Certificate](https://stalw.art/docs/server/tls/certificates).
 
@@ -143,20 +152,26 @@ If you're using Caddy, mount the volume `nextcloud_aio_caddy` to your Caddy cont
 
 Disable some automatic override configurations with environment variables in the file `/opt/stalwart-mail/etc/aio-config.env`.
 
-| Variable                         | Description                                                                                                                                   | Default | WebAdmin URL                                                     |
-|----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|---------|------------------------------------------------------------------|
-| `SECURE_DATA_AFTER_UPGRADE`      | Prevent the server from starting if the data is in an old format.                                                                             | `ON`    |                                                                  |
-| `ENSURE_MAIL_PORT_CONFIG`        | Manage mail exchange port configuration.<br/>This port is used to receive emails.                                                             | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-mail/edit`        |
-| `ENSURE_SUBMISSION_PORT_CONFIG`  | Manage mail submission port configuration.<br/>This port is used to send emails.                                                              | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-submission/edit`  |
-| `ENSURE_IMAP_PORT_CONFIG`        | Manage IMAP port configuration.<br/>This port is used to read emails.                                                                         | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-imap/edit`        |
-| `ENSURE_WEB_PORT_CONFIG`         | Manage web port configuration.<br/>This port is used to access the WebAdmin.                                                                  | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-caddy/edit`       |
-| `ENSURE_MANAGESIEVE_PORT_CONFIG` | Manage managesieve port configuration.<br/>This port is used to manage filters.                                                               | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-managesieve/edit` |
-| `ENSURE_STORAGE_CONFIG`          | Manage storage configuration.                                                                                                                 | `ON`    | `https://mail.$NC_DOMAIN/settings/store/aio-rocksdb/edit`        |
-| `ENSURE_DIRECTORY_CONFIG`        | Manage directory configuration.<br/>This is the system to manage users.                                                                       | `ON`    | `https://mail.$NC_DOMAIN/settings/directory/aio-rocksdb/edit`    |
-| `ENSURE_FILE_LOGGING_CONFIG`     | Manage file logging configuration.<br/>This provides access to logs from the WebAdmin.                                                        | `ON`    | `https://mail.$NC_DOMAIN/settings/tracing/aio-log/edit`          |
-| `ENSURE_CONSOLE_LOGGING_CONFIG`  | Manage console logging configuration.<br/>This provides access to logs from Docker and the master container interface.                        | `ON`    | `https://mail.$NC_DOMAIN/settings/tracing/aio-stdout/edit`       |
-| `ENSURE_FALLBACK_ADMIN_CONFIG`   | Manage fallback admin configuration.<br/>This is the admin account to access the WebAdmin.                                                    | `ON`    | `https://mail.$NC_DOMAIN/settings/authentication/edit`           |
-| `AUTO_CONFIG_TLS_CERT`           | Manage configuration of TLS certificates from the Caddy community container.<br/>This is used to secure the connection for the mail protocol. | `ON`    | `https://mail.$NC_DOMAIN/settings/certificate/caddy-aio/edit`    |
+To edit it run:
+```shell
+docker exec -it nextcloud-aio-stalwart bash -c "nano /opt/stalwart-mail/etc/aio-config.env"
+```
+
+| Variable                         | Description                                                                                                                                   | Default | WebAdmin URL                                                       |
+|----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|---------|--------------------------------------------------------------------|
+| `SECURE_DATA_AFTER_UPGRADE`      | Prevent the server from starting if the data is in an old format.                                                                             | `ON`    |                                                                    |
+| `ENSURE_MAIL_PORT_CONFIG`        | Manage mail exchange port configuration.<br/>This port is used to receive emails.                                                             | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-mail/edit`          |
+| `ENSURE_SUBMISSION_PORT_CONFIG`  | Manage mail submission port configuration.<br/>This port is used to send emails.                                                              | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-submission/edit`    |
+| `ENSURE_IMAP_PORT_CONFIG`        | Manage IMAP port configuration.<br/>This port is used to read emails.                                                                         | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-imap/edit`          |
+| `ENSURE_WEB_PORT_CONFIG`         | Manage web port configuration.<br/>This port is used to access the WebAdmin.                                                                  | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-caddy/edit`         |
+| `ENSURE_MANAGESIEVE_PORT_CONFIG` | Manage managesieve port configuration.<br/>This port is used to manage filters.                                                               | `ON`    | `https://mail.$NC_DOMAIN/settings/listener/aio-managesieve/edit`   |
+| `ENSURE_STORAGE_CONFIG`          | Manage storage configuration.                                                                                                                 | `ON`    | `https://mail.$NC_DOMAIN/settings/store/aio-rocksdb/edit`          |
+| `ENSURE_DIRECTORY_CONFIG`        | Manage directory configuration.<br/>This is the system to manage users.                                                                       | `ON`    | `https://mail.$NC_DOMAIN/settings/directory/aio-rocksdb/edit`      |
+| `ENSURE_FILE_LOGGING_CONFIG`     | Manage file logging configuration.<br/>This provides access to logs from the WebAdmin.                                                        | `ON`    | `https://mail.$NC_DOMAIN/settings/tracing/aio-log/edit`            |
+| `ENSURE_CONSOLE_LOGGING_CONFIG`  | Manage console logging configuration.<br/>This provides access to logs from Docker and the master container interface.                        | `ON`    | `https://mail.$NC_DOMAIN/settings/tracing/aio-stdout/edit`         |
+| `ENSURE_FALLBACK_ADMIN_CONFIG`   | Manage fallback admin configuration.<br/>This is the admin account to access the WebAdmin.                                                    | `ON`    | `https://mail.$NC_DOMAIN/settings/authentication/edit`             |
+| `ENSURE_AIO_CLAMAV_CONFIG`       | Manage ClamAV configuration.<br/>This is used to scan emails for viruses.                                                                     | `OFF`   | `https://mail.$NC_DOMAIN/settings/settings/milter/aio-clamav/edit` |
+| `AUTO_CONFIG_TLS_CERT`           | Manage configuration of TLS certificates from the Caddy community container.<br/>This is used to secure the connection for the mail protocol. | `ON`    | `https://mail.$NC_DOMAIN/settings/certificate/caddy-aio/edit`      |
 
 ## Upgrading
 
