@@ -229,13 +229,13 @@ function fallback_admin() {
 
 function aio_clamav () {
   if [ -z "$ENSURE_AIO_CLAMAV_CONFIG" ]; then
-    echo 'ENSURE_AIO_CLAMAV_CONFIG="OFF"' >> "$STW_AIO_ENV"
-    ENSURE_AIO_CLAMAV_CONFIG="OFF"
+    echo 'ENSURE_AIO_CLAMAV_CONFIG="ON"' >> "$STW_AIO_ENV"
+    ENSURE_AIO_CLAMAV_CONFIG="ON"
   fi
 
-  if [ "$ENSURE_AIO_CLAMAV_CONFIG" = "ON" ]; then
+  if [ "$ENSURE_AIO_CLAMAV_CONFIG" = "ON" ] && [ "$CLAMAV_ENABLED" = "yes" ]; then
     sed -e '/^session\.milter\.aio-clamav\./d'
-    echo "session.milter.aio-clamav.enable = [ { if = \"listener = 'smtp'\", then = true }, { else = false } ]"
+    echo "session.milter.aio-clamav.enable = [ { if = \"listener = 'aio-mail'\", then = true }, { else = false } ]"
     echo 'session.milter.aio-clamav.hostname = "nextcloud-aio-clamav"'
     echo 'session.milter.aio-clamav.port = 3310'
     echo 'session.milter.aio-clamav.tls = false'
@@ -291,6 +291,7 @@ format_toml < "$STW_CONFIG_FILE.old" | \
   file_logging | \
   console_logging | \
   fallback_admin | \
+  aio_clamav | \
   auto_config_cert | \
   sort > "$STW_CONFIG_FILE"
 
