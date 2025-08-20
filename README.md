@@ -18,6 +18,7 @@ This container is used in [Nextcloud All-In-One](https://github.com/nextcloud/al
 Compared to a default Stalwart container, this container allows:
 - Automatic configuration of a mail server.
 - Compatibility with Nextcloud All-In-One backups.
+- Work with ClamAV from the All-In-One.
 - *(Planned)* Synchronization of Nextcloud and Stalwart accounts.
 
 ## Getting Started
@@ -102,12 +103,9 @@ Then you can change the password in the WebAdmin.
 
 ### Enable AIO ClamAV
 
-Before configuring ClamAV, you need to enable the ClamAV inside the All-In-One panel.
+To enable ClamAV, you need to enable the ClamAV inside the All-In-One panel.
 
-Then, enable the autoconfiguration of ClamAV (`ENSURE_AIO_CLAMAV_CONFIG`). See [Managed Settings](#managed-settings).
-
-
-
+Then it will automatically configure the ClamAV in the Stalwart mail server.
 
 ### Use a Custom Domain
 
