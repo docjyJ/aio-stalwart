@@ -102,7 +102,7 @@ Then you can change the password in the WebAdmin.
 
 ### Enable AIO ClamAV
 
-Before configure ClamAV, you need to enable the ClamAV inside the All-In-One panel.
+Before configuring ClamAV, you need to enable the ClamAV inside the All-In-One panel.
 
 Then, enable the autoconfiguration of ClamAV (`ENSURE_AIO_CLAMAV_CONFIG`). See [Managed Settings](#managed-settings).
 
