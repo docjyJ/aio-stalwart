@@ -111,7 +111,7 @@ Then it will automatically configure the ClamAV in the Stalwart mail server.
 
 To configure a custom domain for the mail server, follow these steps:
 
-1. Disable the managed configuration of certificates (`AUTO_CONFIG_TLS_CERT`). See [Managed Settings](#managed-settings).
+1. Disable the managed configuration of certificates `AUTO_CONFIG_TLS_CERT`. See [Managed Settings](#managed-settings).
 2. Configure your own reverse proxy. See [Use Your Own Reverse Proxy](#use-your-own-reverse-proxy).
 3. Add your own certificate. See [Stalwart Certificate](https://stalw.art/docs/server/tls/certificates).
 
