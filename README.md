@@ -168,7 +168,7 @@ docker exec -it nextcloud-aio-stalwart bash -c "nano /opt/stalwart-mail/etc/aio-
 | `ENSURE_FILE_LOGGING_CONFIG`     | Manage file logging configuration.<br/>This provides access to logs from the WebAdmin.                                                        | `ON`    | `https://mail.$NC_DOMAIN/settings/tracing/aio-log/edit`            |
 | `ENSURE_CONSOLE_LOGGING_CONFIG`  | Manage console logging configuration.<br/>This provides access to logs from Docker and the master container interface.                        | `ON`    | `https://mail.$NC_DOMAIN/settings/tracing/aio-stdout/edit`         |
 | `ENSURE_FALLBACK_ADMIN_CONFIG`   | Manage fallback admin configuration.<br/>This is the admin account to access the WebAdmin.                                                    | `ON`    | `https://mail.$NC_DOMAIN/settings/authentication/edit`             |
-| `ENSURE_AIO_CLAMAV_CONFIG`       | Manage ClamAV configuration.<br/>This is used to scan emails for viruses.                                                                     | `OFF`   | `https://mail.$NC_DOMAIN/settings/settings/milter/aio-clamav/edit` |
+| `ENSURE_AIO_CLAMAV_CONFIG`       | Manage ClamAV configuration.<br/>This is used to scan emails for viruses.                                                                     | `OFF`   | `https://mail.$NC_DOMAIN/settings/milter/aio-clamav/edit`          |
 | `AUTO_CONFIG_TLS_CERT`           | Manage configuration of TLS certificates from the Caddy community container.<br/>This is used to secure the connection for the mail protocol. | `ON`    | `https://mail.$NC_DOMAIN/settings/certificate/caddy-aio/edit`      |
 
 ## Upgrading
