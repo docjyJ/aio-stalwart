@@ -7,8 +7,8 @@ on:
   push:
     branches:
       - main
-    paths:
-      - ./Dockerfile
+    tags:
+      - 'v*'
   schedule:
     - cron: '0 0 * * 0'
 
@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Run hadolint
         uses: hadolint/hadolint-action@v3.1.0

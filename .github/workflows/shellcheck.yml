@@ -7,8 +7,8 @@ on:
   push:
     branches:
       - main
-    paths:
-      - '**.sh'
+    tags:
+      - 'v*'
 
 jobs:
   shellcheck:
@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Run Shellcheck
         uses: ludeeus/action-shellcheck@2.0.0
