@@ -6,6 +6,8 @@ updates:
       interval: "daily"
       time: "12:00"
     open-pull-requests-limit: 10
+    labels:
+      - dependency
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
