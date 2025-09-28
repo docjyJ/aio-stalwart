@@ -166,10 +166,37 @@ function directory() {
   fi
 
   if [ "$ENSURE_DIRECTORY_CONFIG" = "ON" ]; then
-    sed -e '/^directory\.aio-rocksdb\./d' -e '/^storage\.directory/d'
-    echo 'directory.aio-rocksdb.type = "internal"'
-    echo 'directory.aio-rocksdb.store = "aio-rocksdb"'
-    echo 'storage.directory = "aio-rocksdb"'
+    sed -e '/^storage\.directory/d' -e '/^directory\.aio-rocksdb\./d' -e '/^directory\.aio-lldap\./d'
+
+    if [ -z "$NC_BASE_DN" ] || [ -z "$LLDAP_LDAP_USER_PASS" ]; then
+      echo 'directory.aio-rocksdb.type = "internal"'
+      echo 'directory.aio-rocksdb.store = "aio-rocksdb"'
+      echo 'storage.directory = "aio-rocksdb"'
+    else
+      echo "directory.aio-lldap.base-dn = \"$NC_BASE_DN\""
+      echo 'directory.aio-lldap.timeout = "30s"'
+      echo 'directory.aio-lldap.type = "ldap"'
+      echo 'directory.aio-lldap.url = "ldap://nextcloud-aio-lldap:3893"'
+      echo 'directory.aio-lldap.attributes.class = "objectClass"'
+      echo 'directory.aio-lldap.attributes.email = "mail"'
+      echo 'directory.aio-lldap.attributes.groups = "member"'
+      echo 'directory.aio-lldap.attributes.name = "uid"'
+      echo 'directory.aio-lldap.attributes.secret = "dummyStalwartSecret"'
+      echo 'directory.aio-lldap.attributes.description.0 = "displayName"'
+      echo "directory.aio-lldap.bind.dn = \"uid=admin,ou=people,$NC_BASE_DN\""
+      echo "directory.aio-lldap.bind.secret = \"%{env:LLDAP_LDAP_USER_PASS}%\""
+      echo 'directory.aio-lldap.bind.auth.dn = "uid=?,ou=people,'$NC_BASE_DN'"'
+      echo 'directory.aio-lldap.bind.auth.enable = true'
+      echo 'directory.aio-lldap.bind.auth.search = true'
+      echo 'directory.aio-lldap.bind.filter.email = "(&(objectClass=person)(mail=?))"'
+      echo 'directory.aio-lldap.bind.filter.name = "(&(objectClass=person)(uid=?))"'
+      echo 'directory.aio-lldap.cache.entries = 500'
+      echo 'directory.aio-lldap.filter.email = "(&(objectclass=person)(mail=?))"'
+      echo 'directory.aio-lldap.filter.name = "(&(objectclass=person)(uid=?))"'
+      echo 'directory.aio-lldap.tls.allow-invalid-certs = true'
+      echo 'directory.aio-lldap.tls.enable = false'
+      echo 'storage.directory = "aio-lldap"'
+    fi
   else
     cat
   fi
