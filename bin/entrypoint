@@ -237,7 +237,7 @@ function aio_clamav () {
     sed -e '/^session\.milter\.aio-clamav\./d'
     echo "session.milter.aio-clamav.enable = [ { if = \"listener = 'aio-mail'\", then = true }, { else = false } ]"
     echo 'session.milter.aio-clamav.hostname = "nextcloud-aio-clamav"'
-    echo 'session.milter.aio-clamav.port = 3310'
+    echo 'session.milter.aio-clamav.port = 7357'
     echo 'session.milter.aio-clamav.tls = false'
     echo 'session.milter.aio-clamav.allow-invalid-certs = false'
   else
