@@ -176,7 +176,7 @@ docker exec -it nextcloud-aio-stalwart bash -c "nano /opt/stalwart-mail/etc/aio-
 > [!NOTE]
 > Unless the starting script tells you, you have no action to do to update.
 
-See [Stalwart Upgrading Guide](https://github.com/stalwartlabs/stalwart/blob/main/UPGRADING.md).
+See [Stalwart Upgrading Guide](https://github.com/stalwartlabs/stalwart/tree/main/UPGRADING).
 
 During a major server update, this message will be displayed:
 
