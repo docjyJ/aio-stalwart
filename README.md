@@ -170,7 +170,7 @@ docker exec -it nextcloud-aio-stalwart bash -c "nano /opt/stalwart-mail/etc/aio-
 | `ENSURE_FALLBACK_ADMIN_CONFIG`   | Manage fallback admin configuration.<br/>This is the admin account to access the WebAdmin.                                                    | `ON`    | `https://mail.$NC_DOMAIN/settings/authentication/edit`           |
 | `ENSURE_AIO_CLAMAV_CONFIG`       | Manage ClamAV configuration.<br/>This is used to scan emails for viruses.                                                                     | `OFF`   | `https://mail.$NC_DOMAIN/settings/milter/aio-clamav/edit`        |
 | `AUTO_CONFIG_TLS_CERT`           | Manage configuration of TLS certificates from the Caddy community container.<br/>This is used to secure the connection for the mail protocol. | `ON`    | `https://mail.$NC_DOMAIN/settings/certificate/caddy-aio/edit`    |
-| `ENSURE_HTTP_USE_X_FORWARDED`    | Enable Stalwart handling of X-Forwarded headers (for reverse proxy setups).                                                                   | `ON`    |                                                                  |
+| `ENSURE_HTTP_USE_X_FORWARDED`    | Enable Stalwart handling of X-Forwarded headers and trusted network (for reverse proxy setups).                                                                   | `ON`    |                                                                  |
 
 ## Upgrading
 

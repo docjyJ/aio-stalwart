@@ -130,8 +130,9 @@ function http_use_x_forwarded() {
   fi
 
   if [ "$ENSURE_HTTP_USE_X_FORWARDED" = "ON" ]; then
-    sed -e '/^http\.use-x-forwarded/d'
+    sed -e '/^http\.use-x-forwarded/d' -e '/^server\.proxy\.trusted-networks/d'
     echo 'http.use-x-forwarded = true'
+    echo 'server.proxy.trusted-networks = ["127.0.0.0/8", "::1"]'
   else
     cat
   fi
