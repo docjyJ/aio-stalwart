@@ -123,6 +123,20 @@ function web_port() {
   fi
 }
 
+function http_use_x_forwarded() {
+  if [ -z "$ENSURE_HTTP_USE_X_FORWARDED" ]; then
+    echo 'ENSURE_HTTP_USE_X_FORWARDED="ON"' >> "$STW_AIO_ENV"
+    ENSURE_HTTP_USE_X_FORWARDED="ON"
+  fi
+
+  if [ "$ENSURE_HTTP_USE_X_FORWARDED" = "ON" ]; then
+    sed -e '/^http\.use-x-forwarded/d'
+    echo 'http.use-x-forwarded = true'
+  else
+    cat
+  fi
+}
+
 function managesieve_port() {
   if [ -z "$ENSURE_MANAGESIEVE_PORT_CONFIG" ]; then
     echo 'ENSURE_MANAGESIEVE_PORT_CONFIG="ON"' >> "$STW_AIO_ENV"
@@ -285,6 +299,7 @@ format_toml < "$STW_CONFIG_FILE.old" | \
   submission_port | \
   imap_port | \
   web_port | \
+  http_use_x_forwarded | \
   managesieve_port | \
   storage | \
   directory | \
