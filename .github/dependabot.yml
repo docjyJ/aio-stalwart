@@ -5,14 +5,18 @@ updates:
     schedule:
       interval: "daily"
       time: "12:00"
+    cooldown:
+      default-days: 28
     open-pull-requests-limit: 10
     labels:
-      - dependency
+      - dependencies
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "daily"
       time: "12:00"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 10
     labels:
-      - dependency
+      - dependencies

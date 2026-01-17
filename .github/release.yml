@@ -8,7 +8,7 @@ changelog:
         - bug
     - title: 👒 Updated dependencies
       labels:
-        - dependency
+        - dependencies
     - title: 📄 Improved documentation
       labels:
         - documentation
