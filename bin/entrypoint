@@ -4,20 +4,16 @@
 AIO_CONFIG_ENV="/etc/stalwart/aio-config.env"
 STW_CONFIG_JSON="/etc/stalwart/aio.json"
 AIO_LOCK="/etc/stalwart/aio.lock"
-DATA_VERSION="0.16"  # Updated to 0.16 for new schema
+DATA_VERSION="0.16"
 
 # check if config.json is already created, else create it with rocksdb
-# when upgrading from v15.x this file is missing, and the user changed with v16
-# so we change the access rights for the DB and storage as well.
+# when upgrading from v15.x this file is missing, same for new setups
 if [ ! -f '/etc/stalwart/config.json' ]; then
   echo '{
           "@type": "RocksDb",
           "path": "/var/lib/stalwart/data"
         }' >> /etc/stalwart/config.json
-  chown -R 2000:2000 /var/lib/stalwart
 fi
-
-
 
 # Create env file if missing
 if [ ! -f "$AIO_CONFIG_ENV" ]; then
@@ -32,6 +28,7 @@ if [ -z "$SECURE_DATA_AFTER_UPGRADE" ]; then
   SECURE_DATA_AFTER_UPGRADE="ON"
 fi
 
+# Default for setup is create the entries
 if [ "$SECURE_DATA_AFTER_UPGRADE" != "OFF" ]; then
   if [ -f "$AIO_LOCK" ]; then
     if [ "$DATA_VERSION" != "$(cat "$AIO_LOCK")" ]; then
@@ -42,6 +39,7 @@ if [ "$SECURE_DATA_AFTER_UPGRADE" != "OFF" ]; then
       exit 1
     fi
   else
+    FIRST_RUN="ON"
     echo "$DATA_VERSION" > "$AIO_LOCK"
   fi
 fi
@@ -65,58 +63,109 @@ fi
 # Initialize JSON object
 json=""
 
-# TODO: fix }, {
-
 ## Generate NetworkListener Section
+# first destroy possible old config, before reloading the current one.
 json+="{\"@type\":\"destroy\",\"object\":\"NetworkListener\"}
-{\"@type\": \"create\", \"object\": \"NetworkListener\", \"value\": { "
+"
 
 # --- Mail Port (SMTP) ---
 if [ "$ENSURE_MAIL_PORT_CONFIG" = "ON" ]; then
-  json+="\"aio-mail\": { \"name\": \"aio-mail\", \"bind\": {\"[::]:25\": true}, \"protocol\": \"smtp\" }, "
+  json+="{\"@type\": \"create\", \"object\": \"NetworkListener\", \"value\": { \"aio-mail\": { \"name\": \"aio-mail\", \"bind\": {\"[::]:25\": true}, \"protocol\": \"smtp\" }}}
+  "
 fi
 
 # --- Submission Port (SMTPS) ---
 if [ "$ENSURE_SUBMISSION_PORT_CONFIG" = "ON" ]; then
-  json+="\"aio-submission\": { \"name\": \"aio-submission\", \"bind\": {\"[::]:465\": true}, \"protocol\": \"smtp\", \"tlsImplicit\": true }, "
+  json+="{\"@type\": \"create\", \"object\": \"NetworkListener\", \"value\": { \"aio-submission\": { \"name\": \"aio-submission\", \"bind\": {\"[::]:465\": true}, \"protocol\": \"smtp\", \"tlsImplicit\": true }}}
+  "
 fi
 
 # --- IMAP Port (IMAPS) ---
 if [ "$ENSURE_IMAP_PORT_CONFIG" = "ON" ]; then
-  json+="\"aio-imap\": { \"name\": \"aio-imap\", \"bind\": {\"[::]:993\": true}, \"protocol\": \"imap\", \"tlsImplicit\": true }, "
+  json+="{\"@type\": \"create\", \"object\": \"NetworkListener\", \"value\": { \"aio-imap\": { \"name\": \"aio-imap\", \"bind\": {\"[::]:993\": true}, \"protocol\": \"imap\", \"tlsImplicit\": true }}}
+  "
 fi
 
 # --- Web Port (HTTP) ---
 if [ "$ENSURE_WEB_PORT_CONFIG" = "ON" ]; then
-  json+="\"aio-caddy\": { \"name\": \"aio-caddy\", \"bind\": {\"[::]:10003\": true}, \"protocol\": \"http\"}, "
+  json+="{\"@type\": \"create\", \"object\": \"NetworkListener\", \"value\": { \"aio-caddy\": { \"name\": \"aio-caddy\", \"bind\": {\"[::]:10003\": true}, \"protocol\": \"http\"}}}
+  "
 fi
 
 # --- Managesieve Port ---
 if [ "$ENSURE_MANAGESIEVE_PORT_CONFIG" != "OFF" ]; then
-  json+="\"aio-managesieve\": { \"name\": \"aio-managesieve\", \"bind\": {\"[::]:4190\": true}, \"protocol\": \"manageSieve\", \"tlsImplicit\": true }"
+  json+="{\"@type\": \"create\", \"object\": \"NetworkListener\", \"value\": { \"aio-managesieve\": { \"name\": \"aio-managesieve\", \"bind\": {\"[::]:4190\": true}, \"protocol\": \"manageSieve\", \"tlsImplicit\": true }}}
+  "
 fi
 
-# Close listeners object
-json+="}}
-"
+## --- TLS Certificate (Auto-Config) ---
+# TLS certs are getting destroyed each time, expecting to just use the aio mechanism for setting up the TLS Certs
+if [ "$AUTO_CONFIG_TLS_CERT" = "ON" ]; then
+  if [ -z "$NC_DOMAIN" ]; then
+    >&2 echo "NC_DOMAIN is not set. Skipping TLS certificate configuration."
+  else
+    AIO_KEY="/caddy/caddy/certificates/acme-v02.api.letsencrypt.org-directory/mail.$NC_DOMAIN/mail.$NC_DOMAIN.key"
+    AIO_PUB="/caddy/caddy/certificates/acme-v02.api.letsencrypt.org-directory/mail.$NC_DOMAIN/mail.$NC_DOMAIN.crt"
+    json+="{\"@type\":\"destroy\",\"object\":\"Certificate\"}
+    {\"@type\":\"create\",\"object\":\"Certificate\",\"value\":{\"aio-cert\": {\"privateKey\":{\"@type\":\"File\",\"filePath\":\"$AIO_KEY\"},\"certificate\":{\"@type\":\"File\",\"filePath\":\"$AIO_PUB\"}}}}
+    "
+    # Wait for certs to exist
+    while [ ! -f "$AIO_KEY" ] || [ ! -f "$AIO_PUB" ]; do
+      >&2 echo "Waiting for SSL keys to be created..."
+      >&2 echo "See: https://github.com/docjyJ/aio-stalwart#use-your-own-certificate"
+      sleep 10
+    done
+  fi
+fi
 
 ## --- System Settings, Domain and HTTP X-Forwarded ---
-## TODO: "services":{"caldav":{"cleartext":false,"hostname":null},"carddav":{"cleartext":false,"hostname":null},"imap":{"cleartext":false,"hostname":null},"jmap":{"cleartext":false,"hostname":null},"managesieve":{"cleartext":false,"hostname":null},"pop3":{"cleartext":false,"hostname":null},"smtp":{"cleartext":false,"hostname":null},"webdav":{"cleartext":false,"hostname":null}}
-json+="{\"@type\":\"create\",\"object\":\"Domain\",\"value\":{\"aio-domain\":{\"subAddressing\":{\"@type\":\"Enabled\"},\"isEnabled\":true,\"aliases\":{},\"name\":\"mail.$NC_DOMAIN\",\"dnsManagement\":{\"@type\":\"Manual\"},\"dkimManagement\":{\"@type\":\"Manual\"},\"certificateManagement\":{\"@type\":\"Manual\"}}}}
+# Setup Domain on first run, skipping for later runs to not destroy other domain-settings
+if [ "$FIRST_RUN" = "ON" ]; then
+  json+="{\"@type\":\"create\",\"object\":\"Domain\",\"value\":{\"aio-domain\":{\"subAddressing\":{\"@type\":\"Enabled\"},\"isEnabled\":true,\"aliases\":{},\"name\":\"$NC_DOMAIN\",\"dnsManagement\":{\"@type\":\"Manual\"},\"dkimManagement\":{\"@type\":\"Automatic\"},\"certificateManagement\":{\"@type\":\"Manual\"}}}}
+  "
+  else
+  echo "SKIPPING AIO DOMAIN SETUP, since this seems to happen before. This script shall not delete or update other Domains which have been configured by the user."
+fi
+# Update System Settings
+json+="{\"@type\": \"update\", \"object\": \"SystemSettings\", \"value\": { \"defaultHostname\":\"mail.$NC_DOMAIN\", \"defaultDomainId\":\"#aio-domain\""
+if [ "$ENSURE_HTTP_USE_X_FORWARDED" = "ON" ]; then
+ json+=", \"proxyTrustedNetworks\":{\"127.0.0.0/8\":true,\"::1\":true}"
+fi
+# Advertise services with default hostname (value: mail.$NC_DOMAIN) and just encrypted (cleartext: false)
+json+=", \"services\":{\"caldav\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"},\"carddav\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"},\"imap\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"},\"jmap\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"},\"managesieve\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"},\"smtp\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"},\"webdav\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"}}}}
 "
 if [ "$ENSURE_HTTP_USE_X_FORWARDED" = "ON" ]; then
-json+="{\"@type\": \"update\", \"object\": \"SystemSettings\", \"value\": { \"defaultHostname\":\"mail.$NC_DOMAIN\", \"defaultDomainId\":\"#aio-domain\", \"proxyTrustedNetworks\":{\"127.0.0.0/8\":true,\"::1\":true}}}
+ json+="{\"@type\": \"update\", \"object\": \"Http\", \"value\": { \"useXForwarded\": true }}
+ "
+fi
+
+# --- ClamAV ---
+if [ "$ENSURE_AIO_CLAMAV_CONFIG" = "ON" ]; then
+json+="{\"@type\": \"destroy\", \"object\": \"MtaMilter\"}
+"
+fi
+if [ "$ENSURE_AIO_CLAMAV_CONFIG" = "ON" ] && [ "$CLAMAV_ENABLED" = "yes" ]; then
+json+="{\"@type\": \"create\", \"object\": \"MtaMilter\", \"value\": { \"aio-clamav\": { \"hostname\": \"nextcloud-aio-clamav\", \"port\": 7357, \"useTls\":false, \"allowInvalidCerts\":false, \"enable\": { \"match\": { \"0\": { \"then\": \"true\", \"if\": \"listener = 'aio-mail'\" }}, \"else\": \"false\" }}}}
 "
 fi
 
-# TODO ClamaAV Milter
-# TODO Loggin
-# TODO Certificates
+# --- Logging (File) ---
+if [ "$ENSURE_FILE_LOGGING_CONFIG" = "ON" ] || [ "$ENSURE_FILE_LOGGING_CONFIG" = "ON" ]; then
+json+="{\"@type\": \"destroy\", \"object\": \"Tracer\"}
+"
+fi
+if [ "$ENSURE_FILE_LOGGING_CONFIG" = "ON" ]; then
+  json+="{\"@type\": \"create\", \"object\": \"Tracer\", \"value\": { \"aio-file\": { \"@type\": \"Log\", \"level\": \"trace\", \"path\": \"/var/log\", \"prefix\": \"stalwart.log\", \"rotate\": \"daily\", \"ansi\": false, \"enable\": true}}}
+  "
+fi
+
+# --- Logging (Console) ---
+if [ "$ENSURE_CONSOLE_LOGGING_CONFIG" = "ON" ]; then
+  json+="{\"@type\": \"create\", \"object\": \"Tracer\", \"value\": { \"aio-log\": { \"@type\": \"Stdout\", \"level\": \"info\",  \"ansi\": false, \"enable\": true }}}
+  "
+fi
 
 # --- Write JSON to File ---
-# Remove trailing commas (simple approach: replace ", " before closing braces)
-json=$(echo "$json" | sed -E 's/,([[:space:]]*})/, \1/g')
-
 # Write to file
 echo "$json" > "$STW_CONFIG_JSON"
 
@@ -125,20 +174,16 @@ if [ ! -s "$STW_CONFIG_JSON" ]; then
   >&2 echo "Failed to generate config file."
   exit 1
 fi
+echo "Stalwart JSON configuration generated"
 
-echo "Stalwart JSON configuration generated at $STW_CONFIG_JSON."
-echo "You can now apply it using: stalwart-cli apply < $STW_CONFIG_JSON"
-
-export STALWART_URL=http://localhost:8080
+export STALWART_RECOVERY_MODE_PORT="8080"
+export STALWART_URL=http://localhost:$STALWART_RECOVERY_MODE_PORT
 export STALWART_USER="admin"
-
-# TODO: use generated password here from aio secrets
-export STALWART_PASSWORD="passwort"
-export STALWART_RECOVERY_ADMIN="admin:$STALWART_PASSWORD"
+export STALWART_PASSWORD=$STALWART_USER_PASS
+export STALWART_RECOVERY_ADMIN="admin:$STALWART_USER_PASS"
 export STALWART_RECOVERY_MODE=1
 
 echo "Starting Stalwart in Recovery mode"
-echo "$STALWART_RECOVERY_ADMIN"
 /usr/local/bin/stalwart --config "/etc/stalwart/config.json" &
 STALWART_PID=$!
 
@@ -147,15 +192,21 @@ sleep 10
 
 echo "Apply configuration"
 stalwart-cli --version
-stalwart-cli describe
+# stalwart-cli describe
 stalwart-cli apply --file $STW_CONFIG_JSON
-sleep 10
 
+sleep 5
 echo "Stop stalwart in recovery"
 kill $STALWART_PID
 
-sleep 10
+sleep 5
 export STALWART_RECOVERY_MODE=0
+if [ "$FIRST_RUN" = "ON" ]; then
+    echo "YOU MUSST CREATE AN ADMIN USER IN THE USER INTERFACE! AND THEN RESTART"
+    echo "Recovery admin will then be deactivated after restart."
+  else
+    export STALWART_RECOVERY_ADMIN=""
+fi
 
 echo "Stalwart initialization complete. Starting Stalwart..."
 
