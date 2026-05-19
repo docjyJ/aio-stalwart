@@ -3,8 +3,8 @@ FROM rust:latest AS builder
 WORKDIR /app
 RUN git clone https://github.com/stalwartlabs/cli.git && \
     cd cli && \
+    git checkout v1.0.6 && \
     cargo build --release
-
 
 # Build mail server docker container
 # From https://github.com/stalwartlabs/mail-server/blob/main/Dockerfile
