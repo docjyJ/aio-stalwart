@@ -3,6 +3,10 @@ FROM ghcr.io/stalwartlabs/stalwart:v0.15.5@sha256:1fc4fbcb2c81f7f4fbe290939720e4
 
 COPY --chmod=775 bin/* /usr/local/bin/
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 EXPOSE 10003
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
