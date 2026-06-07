@@ -1,23 +1,24 @@
 #!/bin/bash
 
 # --- Environment Setup ---
-AIO_CONFIG_ENV="/etc/stalwart/aio-config.env"
-STW_CONFIG_JSON="/etc/stalwart/aio.json"
-AIO_LOCK="/etc/stalwart/aio.lock"
+AIO_CONFIG_ENV="/opt/stalwart-mail/etc/aio-config.env"
+STW_CONFIG_JSON="/opt/stalwart-mail/etc/aio.json"
+STW_CONFIG_EXPORT="/opt/stalwart-mail/etc/export.json"
+AIO_LOCK="/opt/stalwart-mail/aio.lock"
 DATA_VERSION="0.16"
 
 # check if config.json is already created, else create it with rocksdb
 # when upgrading from v15.x this file is missing, same for new setups
-if [ ! -f '/etc/stalwart/config.json' ]; then
+if [ ! -f '/opt/stalwart-mail/etc/config.json' ]; then
   echo '{
           "@type": "RocksDb",
-          "path": "/var/lib/stalwart/data"
-        }' >> /etc/stalwart/config.json
+          "path": "/opt/stalwart-mail/data"
+        }' >> /opt/stalwart-mail/etc/config.json
 fi
 
 # Create env file if missing
 if [ ! -f "$AIO_CONFIG_ENV" ]; then
-  mkdir -p "/etc/stalwart"
+  mkdir -p "/opt/stalwart-mail/etc"
   echo '## REMOVE VARIABLES BELOW IF YOU WANT TO USE DEFAULT VALUES ##' > "$AIO_CONFIG_ENV"
 fi
 source "$AIO_CONFIG_ENV"
@@ -31,7 +32,17 @@ fi
 # Default for setup is create the entries
 if [ "$SECURE_DATA_AFTER_UPGRADE" != "OFF" ]; then
   if [ -f "$AIO_LOCK" ]; then
-    if [ "$DATA_VERSION" != "$(cat "$AIO_LOCK")" ]; then
+    if [ "$(cat "$AIO_LOCK")" = "0.15" ]; then
+      >&2 echo "Scheduling upgrade to v0.16"
+      if [ ! -f "STW_CONFIG_EXPORT" ]; then
+        >&2 echo 'Missing the export.json file with the settings from v0.15.x, Stalwart will not launch.'
+        sleep 10
+        exit 1
+      fi
+      MIGRATE_TO_0_16="ON"
+    elif [ "$(cat "$AIO_LOCK")" = "0.10" ];  then
+      >&2 echo "You started a v0.16 container without exporting the v0.15.x settings first."
+    elif [ "$DATA_VERSION" != "$(cat "$AIO_LOCK")" ]; then
       >&2 echo 'Your data is in an old format.'
       >&2 echo 'Make a backup and see https://github.com/docjyJ/aio-stalwart#Upgrading'
       >&2 echo 'To avoid any loss of data, Stalwart will not launch.'
@@ -120,7 +131,7 @@ fi
 
 ## --- System Settings, Domain and HTTP X-Forwarded ---
 # Setup Domain on first run, skipping for later runs to not destroy other domain-settings
-if [ "$FIRST_RUN" = "ON" ]; then
+if [ -z "$FIRST_RUN" ]; then
   json+="{\"@type\":\"create\",\"object\":\"Domain\",\"value\":{\"aio-domain\":{\"subAddressing\":{\"@type\":\"Enabled\"},\"isEnabled\":true,\"aliases\":{},\"name\":\"$NC_DOMAIN\",\"dnsManagement\":{\"@type\":\"Manual\"},\"dkimManagement\":{\"@type\":\"Automatic\"},\"certificateManagement\":{\"@type\":\"Manual\"}}}}
   "
   else
@@ -184,7 +195,7 @@ export STALWART_RECOVERY_ADMIN="admin:$STALWART_USER_PASS"
 export STALWART_RECOVERY_MODE=1
 
 echo "Starting Stalwart in Recovery mode"
-/usr/local/bin/stalwart --config "/etc/stalwart/config.json" &
+/usr/local/bin/stalwart --config "/opt/stalwart-mail/etc/config.json" &
 STALWART_PID=$!
 
 echo "Stalwart started in recovery mode"
@@ -195,13 +206,20 @@ stalwart-cli --version
 # stalwart-cli describe
 stalwart-cli apply --file $STW_CONFIG_JSON
 
+### RUN MIGRATIONS HERE
+if [ -z "$MIGRATE_TO_0_16" ]; then
+  >&2 echo "Applying v0.15.x settings to stalwart"
+  stalwart-cli apply --file $STW_CONFIG_EXPORT
+  echo "$DATA_VERSION" > "$AIO_LOCK"
+fi
+
 sleep 5
 echo "Stop stalwart in recovery"
 kill $STALWART_PID
 
 sleep 5
 export STALWART_RECOVERY_MODE=0
-if [ "$FIRST_RUN" = "ON" ]; then
+if [ -z "$FIRST_RUN" ]; then
     echo "YOU MUSST CREATE AN ADMIN USER IN THE USER INTERFACE! AND THEN RESTART"
     echo "Recovery admin will then be deactivated after restart."
   else

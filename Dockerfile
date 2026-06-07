@@ -21,7 +21,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
   CMD bash /usr/local/bin/healthcheck
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint" ]
-CMD ["/usr/local/bin/stalwart", "--config", "/etc/stalwart/config.json"]
+CMD ["/usr/local/bin/stalwart", "--config", "/opt/stalwart-mail/etc/config.json"]
 
 # Needed for Nextcloud AIO so that image cleanup can work.
 # Unfortunately, this needs to be set in the Dockerfile in order to work.
