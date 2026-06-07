@@ -11,7 +11,7 @@ fi
 STW_CONFIG_FILE="/opt/stalwart-mail/etc/config.toml"
 STW_AIO_ENV="/opt/stalwart-mail/etc/aio-config.env"
 AIO_LOCK="/opt/stalwart-mail/aio.lock"
-DATA_VERSION="0.10"
+DATA_VERSION="0.15"
 
 if [ -z "$SECURE_DATA_AFTER_UPGRADE" ]; then
   echo 'SECURE_DATA_AFTER_UPGRADE="ON"' >> "$STW_AIO_ENV"
@@ -20,7 +20,13 @@ fi
 
 if [ "$SECURE_DATA_AFTER_UPGRADE" != "OFF" ]; then
   if [ -f "$AIO_LOCK" ]; then
-    if [ "$DATA_VERSION" != "$(cat "$AIO_LOCK")" ]; then
+    if [ "$(cat "$AIO_LOCK")" = "0.10" ] || [ "$(cat "$AIO_LOCK")" = "0.15" ]; then
+             >&2 echo "Preparing system for v16 upgrade."
+             # Starting cron for daily settings export. Needs to be removed once upgraded to v16.
+             sed -i -e "s/ENVIRONMENT/NC_DOMAIN=$NC_DOMAIN STALWART_USER_PASS=$STALWART_USER_PASS/g" /etc/crontab
+             service cron start
+             echo "$DATA_VERSION" > "$AIO_LOCK"
+    elif [ "$DATA_VERSION" != "$(cat "$AIO_LOCK")" ]; then
       >&2 echo 'Your data is in an old format.'
       >&2 echo 'Make a backup and see https://github.com/docjyJ/aio-stalwart#Upgrading'
       >&2 echo 'To avoid any loss of data, Stalwart will not launch.'
@@ -32,6 +38,9 @@ if [ "$SECURE_DATA_AFTER_UPGRADE" != "OFF" ]; then
   fi
 fi
 
+if [ "$SECURE_DATA_AFTER_UPGRADE" = "OFF" ]; then
+  >&2 echo "SECURE_DATA_AFTER_UPGRADE is OFF: you need to manage and migrate the data yourself."
+fi
 # See https://github.com/stalwartlabs/mail-server/blob/main/resources/config/config.toml
 
 function format_toml() {
@@ -317,10 +326,6 @@ if [ ! -s "$STW_CONFIG_FILE" ]; then
   >&2 echo "Failed to generate config file."
   exit 1
 fi
-
-# Starting cron for daily settings export. Needs to be removed once upgraded to v16.
-sed -i -e "s/ENVIRONMENT/NC_DOMAIN=$NC_DOMAIN STALWART_USER_PASS=$STALWART_USER_PASS/g" /etc/crontab
-service cron start
 
 echo "Stalwart initialization complete. Starting Stalwart..."
 
