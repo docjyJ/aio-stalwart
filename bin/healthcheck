@@ -1,3 +1,3 @@
 #!/bin/bash
 
-test "$(curl --haproxy-protocol -s -o /dev/null -w "%{http_code}" http://127.0.0.1:10003/healthz/ready)" == "200"
+test "$(curl --haproxy-protocol -s -o /dev/null -H "X-Forwarded-For: 127.0.0.1" -w "%{http_code}" http://127.0.0.1:10003/healthz/ready)" == "200"
