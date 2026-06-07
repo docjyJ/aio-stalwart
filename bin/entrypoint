@@ -318,6 +318,10 @@ if [ ! -s "$STW_CONFIG_FILE" ]; then
   exit 1
 fi
 
+# Starting cron for daily settings export. Needs to be removed once upgraded to v16.
+sed -i -e "s/ENVIRONMENT/NC_DOMAIN=$NC_DOMAIN STALWART_USER_PASS=$STALWART_USER_PASS/g" /etc/crontab
+service cron start
+
 echo "Stalwart initialization complete. Starting Stalwart..."
 
 exec "$@"
