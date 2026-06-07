@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Starting export script..."
-python3 /usr/local/bin/migrate_v016.py dump --url http://mail.$NC_DOMAIN --username admin --password $STALWART_USER_PASS --settings /opt/stalwart-mail/etc/settings.json --principals /opt/stalwart-mail/etc/principals.json
+python3 /usr/local/bin/migrate_v016.py dump --url https://mail.$NC_DOMAIN --username admin --password $STALWART_USER_PASS --settings /opt/stalwart-mail/etc/settings.json --principals /opt/stalwart-mail/etc/principals.json
 echo "export finished"
 sleep 10
 echo "starting conversion script..."
