@@ -21,7 +21,7 @@ fi
 if [ "$SECURE_DATA_AFTER_UPGRADE" != "OFF" ]; then
   if [ -f "$AIO_LOCK" ]; then
     if [ "$(cat "$AIO_LOCK")" = "0.10" ] || [ "$(cat "$AIO_LOCK")" = "0.15" ]; then
-             >&2 echo "Preparing system for v16 upgrade."
+             >&2 echo "Preparing system for v0.16 upgrade."
              # Starting cron for daily settings export. Needs to be removed once upgraded to v16.
              sed -i -e "s/ENVIRONMENT/NC_DOMAIN=$NC_DOMAIN STALWART_USER_PASS=$STALWART_USER_PASS/g" /etc/crontab
              service cron start
