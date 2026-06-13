@@ -4,7 +4,7 @@
 > [!WARNING]
 > Stalwart and Nextcloud community containers are solutions under development.
 >
-> The mail server is one of the most difficult services to deploy. 
+> The mail server is one of the most difficult services to deploy.
 > This solution is quite stable (used for my own cloud) but it is not enterprise quality.
 >
 > If you have any suggestions, questions, or want to report a bug, [open an issue](https://github.com/docjyj/aio-stalwart/issues)!
@@ -36,8 +36,11 @@ See [how to use community containers](https://github.com/nextcloud/all-in-one/tr
 After installation on Nextcloud, go to `https://mail.$NC_DOMAIN/login` and log in with the following credentials:
 - **Username**: `admin`
 - **Password**: Get password inside the AIO interface
+  This is the password for the fallback admin used for configuring the mail server thrught the JMAP interface. Login
+  with this account is just possible after the first start or when enabled explicitly. **You need to create an admin
+  user for daily use after the first start.**
 
-Once connected, add a domain, configure your DNS zone, and create your users.
+Once connected, add another domain, configure your DNS zone, and create your users.
 
 Additionally, you might want to install and configure [Snappymail](https://apps.nextcloud.com/apps/snappymail) or [Mail](https://apps.nextcloud.com/apps/mail) inside Nextcloud to use your mail accounts for sending and retrieving emails.
 
@@ -189,6 +192,14 @@ To avoid any loss of data, Stalwart will not launch.
 
 > [!CAUTION]
 > Before each update, don't forget to make a backup.
+
+### Upgrading from 0.15.x to 0.16.x
+
+0.16.x introduced braking changes in thers of the whole configuration of stalwart mail server. Toml files are no longer
+used.
+All configurations are now stored in the database and can be edited in the WebAdmin or JMAP api only. Check
+the [stalwart upgrading guide](https://github.com/stalwartlabs/stalwart/blob/main/UPGRADING/v0_16.md) for more
+information
 
 ### Upgrading from 0.9.x to 0.10.x
 
