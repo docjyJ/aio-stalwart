@@ -7,21 +7,24 @@ STW_CONFIG_EXPORT="/opt/stalwart-mail/etc/export.json"
 AIO_LOCK="/opt/stalwart-mail/aio.lock"
 DATA_VERSION="0.16"
 
-# check if config.json is already created, else create it with rocksdb
-# when upgrading from v15.x this file is missing, same for new setups
-if [ ! -f '/opt/stalwart-mail/etc/config.json' ]; then
-  echo '{
-          "@type": "RocksDb",
-          "path": "/opt/stalwart-mail/data"
-        }' >> /opt/stalwart-mail/etc/config.json
-fi
-
 # Create env file if missing
 if [ ! -f "$AIO_CONFIG_ENV" ]; then
   mkdir -p "/opt/stalwart-mail/etc"
   echo '## REMOVE VARIABLES BELOW IF YOU WANT TO USE DEFAULT VALUES ##' > "$AIO_CONFIG_ENV"
 fi
 source "$AIO_CONFIG_ENV"
+
+# check if config.json is already created, else create it with rocksdb
+# when upgrading from v15.x this file is missing, same for new setups
+if [ ! -f '/opt/stalwart-mail/etc/config.json' ]; then
+  echo '{
+          "@type": "RocksDb",
+          "path": "/opt/stalwart-mail/data"
+        }' > /opt/stalwart-mail/etc/config.json
+fi
+if [ ! -f '/etc/stalwart/config.json' ]; then
+  ln -s /opt/stalwart-mail/etc/config.json /etc/stalwart/config.json
+fi
 
 # --- Data Version Check ---
 if [ -z "$SECURE_DATA_AFTER_UPGRADE" ]; then
@@ -69,6 +72,7 @@ fi
 : "${ENSURE_FALLBACK_ADMIN_CONFIG:=ON}"
 : "${ENSURE_AIO_CLAMAV_CONFIG:=ON}"
 : "${AUTO_CONFIG_TLS_CERT:=ON}"
+: "${LOG_LEVEL:=trace}"  ## default: info; altern: debug or trace
 
 # --- Generate JSON Configuration ---
 # Initialize JSON object
@@ -131,7 +135,7 @@ fi
 
 ## --- System Settings, Domain and HTTP X-Forwarded ---
 # Setup Domain on first run, skipping for later runs to not destroy other domain-settings
-if [ -z "$FIRST_RUN" ]; then
+if [ "$FIRST_RUN" = "ON" ]; then
   json+="{\"@type\":\"create\",\"object\":\"Domain\",\"value\":{\"aio-domain\":{\"subAddressing\":{\"@type\":\"Enabled\"},\"isEnabled\":true,\"aliases\":{},\"name\":\"$NC_DOMAIN\",\"dnsManagement\":{\"@type\":\"Manual\"},\"dkimManagement\":{\"@type\":\"Automatic\"},\"certificateManagement\":{\"@type\":\"Manual\"}}}}
   "
   else
@@ -166,13 +170,13 @@ json+="{\"@type\": \"destroy\", \"object\": \"Tracer\"}
 "
 fi
 if [ "$ENSURE_FILE_LOGGING_CONFIG" = "ON" ]; then
-  json+="{\"@type\": \"create\", \"object\": \"Tracer\", \"value\": { \"aio-file\": { \"@type\": \"Log\", \"level\": \"trace\", \"path\": \"/var/log\", \"prefix\": \"stalwart.log\", \"rotate\": \"daily\", \"ansi\": false, \"enable\": true}}}
+  json+="{\"@type\": \"create\", \"object\": \"Tracer\", \"value\": { \"aio-file\": { \"@type\": \"Log\", \"level\": \"$LOG_LEVEL\", \"path\": \"/var/log\", \"prefix\": \"stalwart.log\", \"rotate\": \"daily\", \"ansi\": false, \"enable\": true}}}
   "
 fi
 
 # --- Logging (Console) ---
 if [ "$ENSURE_CONSOLE_LOGGING_CONFIG" = "ON" ]; then
-  json+="{\"@type\": \"create\", \"object\": \"Tracer\", \"value\": { \"aio-log\": { \"@type\": \"Stdout\", \"level\": \"info\",  \"ansi\": false, \"enable\": true }}}
+  json+="{\"@type\": \"create\", \"object\": \"Tracer\", \"value\": { \"aio-log\": { \"@type\": \"Stdout\", \"level\": \"$LOG_LEVEL\",  \"ansi\": false, \"enable\": true }}}
   "
 fi
 
@@ -207,7 +211,7 @@ stalwart-cli --version
 stalwart-cli apply --file $STW_CONFIG_JSON
 
 ### RUN MIGRATIONS HERE
-if [ -z "$MIGRATE_TO_0_16" ]; then
+if [ "$MIGRATE_TO_0_16" = "ON" ]; then
   >&2 echo "Applying v0.15.x settings to stalwart"
   stalwart-cli apply --file $STW_CONFIG_EXPORT
   echo "$DATA_VERSION" > "$AIO_LOCK"
@@ -219,7 +223,7 @@ kill $STALWART_PID
 
 sleep 5
 export STALWART_RECOVERY_MODE=0
-if [ -z "$FIRST_RUN" ]; then
+if [ "$FIRST_RUN" = "ON" ]; then
     echo "YOU MUSST CREATE AN ADMIN USER IN THE USER INTERFACE! AND THEN RESTART"
     echo "Recovery admin will then be deactivated after restart."
   else
