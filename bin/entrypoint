@@ -37,7 +37,7 @@ if [ "$SECURE_DATA_AFTER_UPGRADE" != "OFF" ]; then
   if [ -f "$AIO_LOCK" ]; then
     if [ "$(cat "$AIO_LOCK")" = "0.15" ]; then
       >&2 echo "Scheduling upgrade to v0.16"
-      if [ ! -f "STW_CONFIG_EXPORT" ]; then
+      if [ ! -f "$STW_CONFIG_EXPORT" ]; then
         >&2 echo 'Missing the export.json file with the settings from v0.15.x, Stalwart will not launch.'
         sleep 10
         exit 1
@@ -72,7 +72,7 @@ fi
 : "${ENSURE_FALLBACK_ADMIN_CONFIG:=ON}"
 : "${ENSURE_AIO_CLAMAV_CONFIG:=ON}"
 : "${AUTO_CONFIG_TLS_CERT:=ON}"
-: "${LOG_LEVEL:=trace}"  ## default: info; altern: debug or trace
+: "${LOG_LEVEL:=info}"  ## default: info; altern: debug or trace
 
 # --- Generate JSON Configuration ---
 # Initialize JSON object
@@ -215,6 +215,7 @@ if [ "$MIGRATE_TO_0_16" = "ON" ]; then
   >&2 echo "Applying v0.15.x settings to stalwart"
   stalwart-cli apply --file $STW_CONFIG_EXPORT
   echo "$DATA_VERSION" > "$AIO_LOCK"
+  echo "LOG_LEVEL:=info" >> "$AIO_CONFIG_ENV"
 fi
 
 sleep 5
