@@ -43,6 +43,7 @@ if [ "$SECURE_DATA_AFTER_UPGRADE" != "OFF" ]; then
         exit 1
       fi
       MIGRATE_TO_0_16="ON"
+      FIRST_RUN="ON"
     elif [ "$(cat "$AIO_LOCK")" = "0.10" ];  then
       >&2 echo "You started a v0.16 container without exporting the v0.15.x settings first."
     elif [ "$DATA_VERSION" != "$(cat "$AIO_LOCK")" ]; then
@@ -214,8 +215,8 @@ stalwart-cli apply --file $STW_CONFIG_JSON
 if [ "$MIGRATE_TO_0_16" = "ON" ]; then
   >&2 echo "Applying v0.15.x settings to stalwart"
   stalwart-cli apply --file $STW_CONFIG_EXPORT
-  echo "$DATA_VERSION" > "$AIO_LOCK"
   echo "LOG_LEVEL:=info" >> "$AIO_CONFIG_ENV"
+  echo "$DATA_VERSION" > "$AIO_LOCK"
 fi
 
 sleep 5
