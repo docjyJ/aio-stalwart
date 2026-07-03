@@ -67,7 +67,6 @@ if [ "$SECURE_DATA_AFTER_UPGRADE" != "OFF" ]; then
         exit 1
       fi
       MIGRATE_TO_0_16="ON"
-      FIRST_RUN="ON"
     elif [ "$(cat "$AIO_LOCK")" = "0.10" ];  then
       >&2 echo "You started a v0.16 container without exporting the v0.15.x settings first."
     elif [ "$DATA_VERSION" != "$(cat "$AIO_LOCK")" ]; then
