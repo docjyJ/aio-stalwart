@@ -7,10 +7,40 @@ STW_CONFIG_EXPORT="/opt/stalwart-mail/etc/export.json"
 AIO_LOCK="/opt/stalwart-mail/aio.lock"
 DATA_VERSION="0.16"
 
+# --- Defaults for Environment Variables ---
+: "${SECURE_DATA_AFTER_UPGRADE:=ON}"
+: "${ENSURE_MAIL_PORT_CONFIG:=ON}"
+: "${ENSURE_SUBMISSION_PORT_CONFIG:=ON}"
+: "${ENSURE_IMAP_PORT_CONFIG:=ON}"
+: "${ENSURE_WEB_PORT_CONFIG:=ON}"
+: "${ENSURE_HTTP_USE_X_FORWARDED:=ON}"
+: "${ENSURE_MANAGESIEVE_PORT_CONFIG:=ON}"
+: "${ENSURE_STORAGE_CONFIG:=ON}"
+: "${ENSURE_DIRECTORY_CONFIG:=ON}"
+: "${ENSURE_FILE_LOGGING_CONFIG:=ON}"
+: "${ENSURE_CONSOLE_LOGGING_CONFIG:=ON}"
+: "${ENSURE_FALLBACK_ADMIN_CONFIG:=ON}"
+: "${AUTO_CONFIG_TLS_CERT:=ON}"
+: "${LOG_LEVEL:=info}"  ## default: info; altern: debug or trace
+
 # Create env file if missing
 if [ ! -f "$AIO_CONFIG_ENV" ]; then
   mkdir -p "/opt/stalwart-mail/etc"
   echo '## REMOVE VARIABLES BELOW IF YOU WANT TO USE DEFAULT VALUES ##' > "$AIO_CONFIG_ENV"
+  echo 'SECURE_DATA_AFTER_UPGRADE="'${SECURE_DATA_AFTER_UPGRADE}'"' >> "$AIO_CONFIG_ENV"
+  echo 'ENSURE_MAIL_PORT_CONFIG="'${ENSURE_MAIL_PORT_CONFIG}'"' >> "${AIO_CONFIG_ENV}"
+  echo 'ENSURE_SUBMISSION_PORT_CONFIG="'${ENSURE_SUBMISSION_PORT_CONFIG}'"' >> "${AIO_CONFIG_ENV}"
+  echo 'ENSURE_IMAP_PORT_CONFIG="'${ENSURE_IMAP_PORT_CONFIG}'"' >> "${AIO_CONFIG_ENV}"
+  echo 'ENSURE_WEB_PORT_CONFIG="'${ENSURE_WEB_PORT_CONFIG}'"' >> "${AIO_CONFIG_ENV}"
+  echo 'ENSURE_HTTP_USE_X_FORWARDED="'${ENSURE_HTTP_USE_X_FORWARDED}'"' >> "${AIO_CONFIG_ENV}"
+  echo 'ENSURE_MANAGESIEVE_PORT_CONFIG="'${ENSURE_MANAGESIEVE_PORT_CONFIG}'"' >> "${AIO_CONFIG_ENV}"
+  echo 'ENSURE_STORAGE_CONFIG="'${ENSURE_STORAGE_CONFIG}'"' >> "${AIO_CONFIG_ENV}"
+  echo 'ENSURE_DIRECTORY_CONFIG="'${ENSURE_DIRECTORY_CONFIG}'"' >> "${AIO_CONFIG_ENV}"
+  echo 'ENSURE_FILE_LOGGING_CONFIG="'${ENSURE_FILE_LOGGING_CONFIG}'"' >> "${AIO_CONFIG_ENV}"
+  echo 'ENSURE_CONSOLE_LOGGING_CONFIG="'${ENSURE_CONSOLE_LOGGING_CONFIG}'"' >> "${AIO_CONFIG_ENV}"
+  echo 'ENSURE_FALLBACK_ADMIN_CONFIG="'${ENSURE_FALLBACK_ADMIN_CONFIG}'"' >> "${AIO_CONFIG_ENV}"
+  echo 'AUTO_CONFIG_TLS_CERT="'${AUTO_CONFIG_TLS_CERT}'"' >> "${AIO_CONFIG_ENV}"
+  echo 'LOG_LEVEL="'${LOG_LEVEL}'"' >> "${AIO_CONFIG_ENV}"
 fi
 source "$AIO_CONFIG_ENV"
 
@@ -24,12 +54,6 @@ if [ ! -f '/opt/stalwart-mail/etc/config.json' ]; then
 fi
 if [ ! -f '/etc/stalwart/config.json' ]; then
   ln -s /opt/stalwart-mail/etc/config.json /etc/stalwart/config.json
-fi
-
-# --- Data Version Check ---
-if [ -z "$SECURE_DATA_AFTER_UPGRADE" ]; then
-  echo 'SECURE_DATA_AFTER_UPGRADE="ON"' >> "$AIO_CONFIG_ENV"
-  SECURE_DATA_AFTER_UPGRADE="ON"
 fi
 
 # Default for setup is create the entries
@@ -58,22 +82,6 @@ if [ "$SECURE_DATA_AFTER_UPGRADE" != "OFF" ]; then
     echo "$DATA_VERSION" > "$AIO_LOCK"
   fi
 fi
-
-# --- Defaults for Environment Variables ---
-: "${ENSURE_MAIL_PORT_CONFIG:=ON}"
-: "${ENSURE_SUBMISSION_PORT_CONFIG:=ON}"
-: "${ENSURE_IMAP_PORT_CONFIG:=ON}"
-: "${ENSURE_WEB_PORT_CONFIG:=ON}"
-: "${ENSURE_HTTP_USE_X_FORWARDED:=ON}"
-: "${ENSURE_MANAGESIEVE_PORT_CONFIG:=ON}"
-: "${ENSURE_STORAGE_CONFIG:=ON}"
-: "${ENSURE_DIRECTORY_CONFIG:=ON}"
-: "${ENSURE_FILE_LOGGING_CONFIG:=ON}"
-: "${ENSURE_CONSOLE_LOGGING_CONFIG:=ON}"
-: "${ENSURE_FALLBACK_ADMIN_CONFIG:=ON}"
-: "${ENSURE_AIO_CLAMAV_CONFIG:=ON}"
-: "${AUTO_CONFIG_TLS_CERT:=ON}"
-: "${LOG_LEVEL:=info}"  ## default: info; altern: debug or trace
 
 # --- Generate JSON Configuration ---
 # Initialize JSON object
@@ -143,7 +151,10 @@ if [ "$FIRST_RUN" = "ON" ]; then
   echo "SKIPPING AIO DOMAIN SETUP, since this seems to happen before. This script shall not delete or update other Domains which have been configured by the user."
 fi
 # Update System Settings
-json+="{\"@type\": \"update\", \"object\": \"SystemSettings\", \"value\": { \"defaultHostname\":\"mail.$NC_DOMAIN\", \"defaultDomainId\":\"#aio-domain\""
+json+="{\"@type\": \"update\", \"object\": \"SystemSettings\", \"value\": { \"defaultHostname\":\"mail.$NC_DOMAIN\""
+if [ "$FIRST_RUN" = "ON" ]; then
+  json+=", \"defaultDomainId\":\"#aio-domain\""
+fi
 if [ "$ENSURE_HTTP_USE_X_FORWARDED" = "ON" ]; then
  json+=", \"proxyTrustedNetworks\":{\"127.0.0.0/8\":true,\"::1\":true}"
 fi
@@ -208,14 +219,13 @@ sleep 10
 
 echo "Apply configuration"
 stalwart-cli --version
-# stalwart-cli describe
 stalwart-cli apply --file $STW_CONFIG_JSON
 
 ### RUN MIGRATIONS HERE
 if [ "$MIGRATE_TO_0_16" = "ON" ]; then
   >&2 echo "Applying v0.15.x settings to stalwart"
   stalwart-cli apply --file $STW_CONFIG_EXPORT
-  echo "LOG_LEVEL:=info" >> "$AIO_CONFIG_ENV"
+  echo 'LOG_LEVEL="info"' >> "$AIO_CONFIG_ENV"
   echo "$DATA_VERSION" > "$AIO_LOCK"
 fi
 
