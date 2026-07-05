@@ -22,6 +22,7 @@ DATA_VERSION="0.16"
 : "${ENSURE_FALLBACK_ADMIN_CONFIG:=ON}"
 : "${ENSURE_AIO_CLAMAV_CONFIG:=ON}"
 : "${AUTO_CONFIG_TLS_CERT:=ON}"
+: "${RECOVERY_ADMIN:=ON}"  ## default is set to ON to give the user the chance to create an admin account. Shall be changed of OFF by User.
 : "${LOG_LEVEL:=info}"  ## default: info; altern: debug or trace
 
 # Create env file if missing
@@ -42,6 +43,7 @@ if [ ! -f "$AIO_CONFIG_ENV" ]; then
   echo 'ENSURE_FALLBACK_ADMIN_CONFIG="'${ENSURE_FALLBACK_ADMIN_CONFIG}'"' >> "${AIO_CONFIG_ENV}"
   echo 'ENSURE_AIO_CLAMAV_CONFIG="'${ENSURE_AIO_CLAMAV_CONFIG}'"' >> "${AIO_CONFIG_ENV}"
   echo 'AUTO_CONFIG_TLS_CERT="'${AUTO_CONFIG_TLS_CERT}'"' >> "${AIO_CONFIG_ENV}"
+  echo 'RECOVERY_ADMIN="'${RECOVERY_ADMIN}'"' >> "${RECOVERY_ADMIN}"
   echo 'LOG_LEVEL="'${LOG_LEVEL}'"' >> "${AIO_CONFIG_ENV}"
 fi
 source "$AIO_CONFIG_ENV"
@@ -123,6 +125,32 @@ if [ "$ENSURE_MANAGESIEVE_PORT_CONFIG" != "OFF" ]; then
   "
 fi
 
+## --- System Settings, Domain and HTTP X-Forwarded ---
+# Setup Domain on first run, skipping for later runs to not destroy other domain-settings
+if [ "$FIRST_RUN" = "ON" ]; then
+  echo "Setup AIO-Domain, since this is the first startup. This will fail if domain already exists."
+  json+="{\"@type\":\"create\",\"object\":\"Domain\",\"value\":{\"aio-domain\":{\"subAddressing\":{\"@type\":\"Enabled\"},\"isEnabled\":true,\"aliases\":{},\"name\":\"$NC_DOMAIN\",\"dnsManagement\":{\"@type\":\"Manual\"},\"dkimManagement\":{\"@type\":\"Automatic\"},\"certificateManagement\":{\"@type\":\"Manual\"}}}}
+  "
+else
+  echo "SKIPPING AIO DOMAIN SETUP, since this seems to happen before. This script shall not delete or update other Domains which have been configured by the user."
+fi
+# Update System Settings
+json+="{\"@type\": \"update\", \"object\": \"SystemSettings\", \"value\": { \"defaultHostname\":\"mail.$NC_DOMAIN\""
+if [ "$FIRST_RUN" = "ON" ]; then
+  echo "And use AIO-Domain as default domain."
+  json+=", \"defaultDomainId\":\"#aio-domain\""
+fi
+if [ "$ENSURE_HTTP_USE_X_FORWARDED" = "ON" ]; then
+ json+=", \"proxyTrustedNetworks\":{\"127.0.0.0/8\":true,\"::1\":true}"
+fi
+# Advertise services with default hostname (value: mail.$NC_DOMAIN) and just encrypted (cleartext: false)
+json+=", \"services\":{\"caldav\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"},\"carddav\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"},\"imap\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"},\"jmap\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"},\"managesieve\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"},\"smtp\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"},\"webdav\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"}}}}
+"
+if [ "$ENSURE_HTTP_USE_X_FORWARDED" = "ON" ]; then
+ json+="{\"@type\": \"update\", \"object\": \"Http\", \"value\": { \"useXForwarded\": true }}
+ "
+fi
+
 ## --- TLS Certificate (Auto-Config) ---
 # TLS certs are getting destroyed each time, expecting to just use the aio mechanism for setting up the TLS Certs
 if [ "$AUTO_CONFIG_TLS_CERT" = "ON" ]; then
@@ -141,30 +169,6 @@ if [ "$AUTO_CONFIG_TLS_CERT" = "ON" ]; then
       sleep 10
     done
   fi
-fi
-
-## --- System Settings, Domain and HTTP X-Forwarded ---
-# Setup Domain on first run, skipping for later runs to not destroy other domain-settings
-if [ "$FIRST_RUN" = "ON" ]; then
-  json+="{\"@type\":\"create\",\"object\":\"Domain\",\"value\":{\"aio-domain\":{\"subAddressing\":{\"@type\":\"Enabled\"},\"isEnabled\":true,\"aliases\":{},\"name\":\"$NC_DOMAIN\",\"dnsManagement\":{\"@type\":\"Manual\"},\"dkimManagement\":{\"@type\":\"Automatic\"},\"certificateManagement\":{\"@type\":\"Manual\"}}}}
-  "
-  else
-  echo "SKIPPING AIO DOMAIN SETUP, since this seems to happen before. This script shall not delete or update other Domains which have been configured by the user."
-fi
-# Update System Settings
-json+="{\"@type\": \"update\", \"object\": \"SystemSettings\", \"value\": { \"defaultHostname\":\"mail.$NC_DOMAIN\""
-if [ "$FIRST_RUN" = "ON" ]; then
-  json+=", \"defaultDomainId\":\"#aio-domain\""
-fi
-if [ "$ENSURE_HTTP_USE_X_FORWARDED" = "ON" ]; then
- json+=", \"proxyTrustedNetworks\":{\"127.0.0.0/8\":true,\"::1\":true}"
-fi
-# Advertise services with default hostname (value: mail.$NC_DOMAIN) and just encrypted (cleartext: false)
-json+=", \"services\":{\"caldav\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"},\"carddav\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"},\"imap\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"},\"jmap\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"},\"managesieve\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"},\"smtp\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"},\"webdav\":{\"cleartext\":false,\"hostname\":\"mail.$NC_DOMAIN\"}}}}
-"
-if [ "$ENSURE_HTTP_USE_X_FORWARDED" = "ON" ]; then
- json+="{\"@type\": \"update\", \"object\": \"Http\", \"value\": { \"useXForwarded\": true }}
- "
 fi
 
 # --- ClamAV ---
@@ -208,7 +212,7 @@ export STALWART_RECOVERY_MODE_PORT="8080"
 export STALWART_URL=http://localhost:$STALWART_RECOVERY_MODE_PORT
 export STALWART_USER="admin"
 export STALWART_PASSWORD=$STALWART_USER_PASS
-export STALWART_RECOVERY_ADMIN="admin:$STALWART_USER_PASS"
+export STALWART_RECOVERY_ADMIN="$STALWART_USER:$STALWART_USER_PASS"
 export STALWART_RECOVERY_MODE=1
 
 echo "Starting Stalwart in Recovery mode"
@@ -220,12 +224,13 @@ sleep 10
 
 echo "Apply configuration"
 stalwart-cli --version
-stalwart-cli apply --file $STW_CONFIG_JSON
+stalwart-cli apply --file $STW_CONFIG_JSON --continue-on-error
 
 ### RUN MIGRATIONS HERE
 if [ "$MIGRATE_TO_0_16" = "ON" ]; then
   >&2 echo "Applying v0.15.x settings to stalwart"
-  stalwart-cli apply --file $STW_CONFIG_EXPORT
+  stalwart-cli apply --file $STW_CONFIG_EXPORT --continue-on-error
+  echo 'RECOVERY_ADMIN="ON"' >> "$AIO_CONFIG_ENV"
   echo 'LOG_LEVEL="info"' >> "$AIO_CONFIG_ENV"
   echo "$DATA_VERSION" > "$AIO_LOCK"
 fi
@@ -236,9 +241,8 @@ kill $STALWART_PID
 
 sleep 5
 export STALWART_RECOVERY_MODE=0
-if [ "$FIRST_RUN" = "ON" ]; then
-    echo "YOU MUSST CREATE AN ADMIN USER IN THE USER INTERFACE! AND THEN RESTART"
-    echo "Recovery admin will then be deactivated after restart."
+if [ "$RECOVERY_ADMIN" = "ON" ]; then
+    echo "IT IS HIGHLY RECOMENDED TO CREATE AN ADMIN USER IN THE USER INTERFACE AND DEACTIVATE THE RECOVERY_ADMIN!"
   else
     export STALWART_RECOVERY_ADMIN=""
 fi
