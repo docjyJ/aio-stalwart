@@ -3,7 +3,7 @@ FROM ghcr.io/stalwartlabs/stalwart:v0.15.5@sha256:1fc4fbcb2c81f7f4fbe290939720e4
 
 COPY --chmod=775 bin/* /usr/local/bin/
 
-# Install curl for heathcheck, alongside cron and pyhton which are used for migration from v15 to v16; cron and pyhton can be removed once upgraded to v16
+# Install curl for heathcheck, alongside cron and python which are used for migration from v15 to v16; cron and python can be removed once upgraded to v16
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl cron python3 python3-pip python3-requests python3-urllib3\
     && rm -rf /var/lib/apt/lists/*
