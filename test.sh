@@ -33,10 +33,13 @@ docker run --rm -v $CADDY:/caddy:ro -v $STALWART:/opt/stalwart-mail \
     -e "STALWART_USER_PASS=$PASSWORD" \
     --name $STALWART $STALWART &
 STALWART_PID=$!
-sleep 11
+sleep 30
 
 print_step "Test"
-docker exec $STALWART stalwart-cli -u http://127.0.0.1:10003 -c "admin:$PASSWORD" server list-config | sort > out.txt
+docker exec $STALWART stalwart-cli --url http://127.0.0.1:10003 --user "admin" --password $PASSWORD snapshot \
+Tenant Domain DkimSignature AcmeProvider Certificate DnsServer Role \
+    Account Directory SystemSettings DataRetention BlobStore InMemoryStore SearchStore \
+    > out.ndjson
 
 print_step "Remove volume"
 docker container rm $STALWART -f
