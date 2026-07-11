@@ -3,12 +3,12 @@ FROM rust:latest AS builder
 WORKDIR /app
 RUN git clone https://github.com/stalwartlabs/cli.git && \
     cd cli && \
-    git checkout v1.0.6 && \
+    git checkout v1.0.10 && \
     cargo build --release
 
 # Build mail server docker container
 # From https://github.com/stalwartlabs/mail-server/blob/main/Dockerfile
-FROM ghcr.io/stalwartlabs/stalwart:v0.16.5@sha256:c435a9b97526205dd0bc46245ae97b960cf4cd7a5f1e411f14f36a9d5fc6efdb
+FROM ghcr.io/stalwartlabs/stalwart:v0.16.12@sha256:b30c99ed8240ea42612f784babe0388318d5c3668a77873efe7e3b1147e2226e
 
 COPY --chmod=775 bin/* /usr/local/bin/
 COPY --chmod=775 --from=builder /app/cli/target/release/stalwart-cli /usr/local/bin/
