@@ -132,14 +132,13 @@ if [ "$FIRST_RUN" = "ON" ]; then
   json+="{\"@type\":\"create\",\"object\":\"Domain\",\"value\":{\"aio-domain\":{\"subAddressing\":{\"@type\":\"Enabled\"},\"isEnabled\":true,\"aliases\":{},\"name\":\"$NC_DOMAIN\",\"dnsManagement\":{\"@type\":\"Manual\"},\"dkimManagement\":{\"@type\":\"Automatic\"},\"certificateManagement\":{\"@type\":\"Manual\"}}}}
   "
 else
-  echo "SKIPPING AIO DOMAIN SETUP, since this seems to happen before. This script shall not delete or update other Domains which have been configured by the user."
+  echo "Setup AIO-Domain, since this is the first startup. This will fail if domain already exists."
+  json+="{\"@type\":\"upsert\",\"object\":\"Domain\",\"value\":{\"aio-domain\":{\"subAddressing\":{\"@type\":\"Enabled\"},\"isEnabled\":true,\"aliases\":{},\"name\":\"$NC_DOMAIN\",\"dkimManagement\":{\"@type\":\"Automatic\"},\"certificateManagement\":{\"@type\":\"Manual\"}}}}
+  "
 fi
 # Update System Settings
-json+="{\"@type\": \"update\", \"object\": \"SystemSettings\", \"value\": { \"defaultHostname\":\"mail.$NC_DOMAIN\""
-if [ "$FIRST_RUN" = "ON" ]; then
-  echo "And use AIO-Domain as default domain."
-  json+=", \"defaultDomainId\":\"#aio-domain\""
-fi
+json+="{\"@type\": \"update\", \"object\": \"SystemSettings\", \"value\": { \"defaultHostname\":\"mail.$NC_DOMAIN\", \"defaultDomainId\":\"#aio-domain\""
+
 if [ "$ENSURE_HTTP_USE_X_FORWARDED" = "ON" ]; then
  json+=", \"proxyTrustedNetworks\":{\"127.0.0.0/8\":true,\"::1\":true}"
 fi
@@ -152,15 +151,14 @@ if [ "$ENSURE_HTTP_USE_X_FORWARDED" = "ON" ]; then
 fi
 
 ## --- TLS Certificate (Auto-Config) ---
-# TLS certs are getting destroyed each time, expecting to just use the aio mechanism for setting up the TLS Certs
+# TLS certs are getting updated each time, expecting to just use the aio mechanism for setting up the TLS Certs
 if [ "$AUTO_CONFIG_TLS_CERT" = "ON" ]; then
   if [ -z "$NC_DOMAIN" ]; then
     >&2 echo "NC_DOMAIN is not set. Skipping TLS certificate configuration."
   else
     AIO_KEY="/caddy/caddy/certificates/acme-v02.api.letsencrypt.org-directory/mail.$NC_DOMAIN/mail.$NC_DOMAIN.key"
     AIO_PUB="/caddy/caddy/certificates/acme-v02.api.letsencrypt.org-directory/mail.$NC_DOMAIN/mail.$NC_DOMAIN.crt"
-    json+="{\"@type\":\"destroy\",\"object\":\"Certificate\"}
-    {\"@type\":\"create\",\"object\":\"Certificate\",\"value\":{\"aio-cert\": {\"privateKey\":{\"@type\":\"File\",\"filePath\":\"$AIO_KEY\"},\"certificate\":{\"@type\":\"File\",\"filePath\":\"$AIO_PUB\"}}}}
+    json+="{\"@type\":\"upsert\",\"object\":\"Certificate\",\"value\":{\"aio-cert\": {\"subjectAlternativeNames\": \"mail.$NC_DOMAIN\", \"privateKey\":{\"@type\":\"File\",\"filePath\":\"$AIO_KEY\"},\"certificate\":{\"@type\":\"File\",\"filePath\":\"$AIO_PUB\"}}}}
     "
     # Wait for certs to exist
     while [ ! -f "$AIO_KEY" ] || [ ! -f "$AIO_PUB" ]; do
@@ -222,10 +220,6 @@ STALWART_PID=$!
 echo "Stalwart started in recovery mode"
 sleep 10
 
-echo "Apply configuration"
-stalwart-cli --version
-stalwart-cli apply --file $STW_CONFIG_JSON --continue-on-error
-
 ### RUN MIGRATIONS HERE
 if [ "$MIGRATE_TO_0_16" = "ON" ]; then
   >&2 echo "Applying v0.15.x settings to stalwart"
@@ -234,6 +228,10 @@ if [ "$MIGRATE_TO_0_16" = "ON" ]; then
   echo 'LOG_LEVEL="info"' >> "$AIO_CONFIG_ENV"
   echo "$DATA_VERSION" > "$AIO_LOCK"
 fi
+
+echo "Apply configuration"
+stalwart-cli --version
+stalwart-cli apply --file $STW_CONFIG_JSON --continue-on-error
 
 sleep 5
 echo "Stop stalwart in recovery"
