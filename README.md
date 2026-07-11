@@ -218,8 +218,12 @@ recommended to configure an Admin User in the Management Interface and put the E
 with 2FA also, which is not possible for the recovery admin.
 
 Other than that, it is highly recommended to check all settings in the WebAdmin after the upgrade, as some of the
-settings might have changed or migration has not been done correctly. E.g. v0.16 now requires a domain for each account
-during login, which the upgrade adds to the users automatically.
+settings might have changed its place or are not part of the migration script from stalwart at all. E.g.
+
+- v0.16 now requires a domain for each account during login,
+- app-specific passwords are not migrated automatically,
+- catch all addresses are now setup in the domain itslef and not migrated automatically,
+- and so on.
 
 ### Upgrading from 0.9.x to 0.10.x
 
