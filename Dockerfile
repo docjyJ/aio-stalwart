@@ -1,5 +1,5 @@
 # From https://github.com/stalwartlabs/mail-server/blob/main/Dockerfile
-FROM ghcr.io/stalwartlabs/stalwart:v0.15.5@sha256:1fc4fbcb2c81f7f4fbe290939720e469ce949afd937c1b3d1a40930b2c38bbaf
+FROM ghcr.io/stalwartlabs/stalwart:v0.16.22@sha256:388dcb75a70727c5b551249a6d34b1f1321294852489e4fa3a4e6be698b7c4f0
 
 COPY --chmod=775 bin/* /usr/local/bin/
 
